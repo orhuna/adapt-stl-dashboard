@@ -134,6 +134,7 @@
           <button class="btn btn-ghost btn-icon mobile-only rail-close" id="btn-close-rail" aria-label="Close panel list">✕</button>
           <h3>Panels</h3>
           <p id="rail-help">Drag onto the canvas, or tap a panel and then tap an empty slot.</p>
+          <input class="text-input rail-search" id="in-palette-search" type="search" placeholder="Search panels…" aria-label="Search panels">
         </div>
         <div class="rail-body" id="palette"></div>
       </aside>
@@ -144,6 +145,10 @@
           <span class="chip" id="chip-hazard">Hazard</span>
           <span class="chip" id="chip-count">0 panels</span>
           <span class="spacer"></span>
+          <div class="seg seg-sm" id="layout-mode" role="group" aria-label="Layout mode">
+            <button type="button" data-val="grid" class="is-active">Tidy grid</button>
+            <button type="button" data-val="free">Free layout</button>
+          </div>
           <button class="btn btn-sm mobile-only" id="btn-rail-2">＋ Add panel</button>
           <button class="btn btn-sm" id="btn-add-slot">Add empty slot</button>
           <button class="btn btn-sm btn-primary" id="btn-to-review">Review &amp; submit</button>
@@ -157,6 +162,15 @@
               <span class="chip" style="flex:0 0 auto">your app</span>
             </div>
             <div class="canvas-grid" id="canvas"></div>
+            <div class="free-wrap" id="free-wrap" hidden>
+              <p class="free-hint">Free layout: drag a panel's title bar to move it anywhere, drag its bottom-right corner to resize, and overlap them however you like. Nothing snaps into rows.</p>
+              <div class="free-surface" id="free-surface">
+                <div class="free-empty" id="free-empty">
+                  <b>Empty canvas</b>
+                  <span>Drag a panel from the left onto this space — or tap one and it will drop in. Then drag its title bar to move it and the corner to resize it.</span>
+                </div>
+              </div>
+            </div>
             <div class="canvas-actions">
               <p class="nav-note" id="canvas-hint">Tip: click a panel to describe what it must show. Notes are what the Forum writes up — the layout alone isn't enough.</p>
             </div>

@@ -372,15 +372,25 @@ const TEMPLATES = [
     ],
   },
   {
-    id: 'blank', name: 'Blank canvas',
-    desc: 'Start empty and build the layout yourself. Add, resize and remove panels freely.',
+    id: 'blank', name: 'Blank canvas (tidy grid)',
+    desc: 'Start empty and build the layout yourself. Panels snap into a neat grid so nothing overlaps.',
     thumb: [[3, 1], [3, 1]],
     slots: [
       { w: 3, h: 2, hint: 'anything' },
       { w: 3, h: 2, hint: 'anything' },
     ],
   },
+  {
+    id: 'freeform', name: 'Build my own — free layout',
+    free: true,
+    desc: 'A completely open canvas. Drag every window exactly where you want it, resize it, overlap it. Closest to sketching the app on a whiteboard.',
+    thumb: [[3, 2, 1], [2, 1], [2, 2], [3, 1]],
+    slots: [],
+  },
 ];
+
+/* Free-layout design surface, in CSS pixels. Panels store x/y/w/h in this space. */
+const FREE = { width: 1180, minHeight: 760, grid: 20, minW: 220, minH: 190, pad: 16 };
 
 /* Token resolution for template picks */
 const TOKENS = {
