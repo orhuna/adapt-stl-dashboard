@@ -67,7 +67,24 @@ function toast(msg) {
 
 /* ---------------- navigation ---------------- */
 
+function renderHeroStrip() {
+  const el = $('#hero-strip');
+  if (!el) return;
+  const ids = [
+    ['heat-map', 'Heat hotspot map'], ['flood-map', 'Flood depth map'],
+    ['heatdays', 'Forecast vs. threshold'], ['hydrograph', 'River stage'],
+    ['alert', 'Threshold alert'], ['nearme', 'Walk-time to help'],
+  ];
+  el.innerHTML = ids.map(([id, label]) => {
+    const w = WIDGET_BY_ID[id];
+    if (!w) return '';
+    return `<figure><span class="hs-view">${previewMarkup(w, 'canvas')}</span>
+      <figcaption>${esc(label)}</figcaption></figure>`;
+  }).join('');
+}
+
 function goto(screen) {
+  const _t = $('#toast'); if (_t) _t.classList.remove('is-open');
   state.screen = screen;
   SCREENS.forEach((s) => $('#screen-' + s).classList.toggle('is-active', s === screen));
   const build = screen === 'build';
@@ -598,6 +615,7 @@ function closeSheets() {
 function init() {
   applyTheme();
   renderStepper();
+  renderHeroStrip();
   renderPurpose();
   renderTemplates();
 
