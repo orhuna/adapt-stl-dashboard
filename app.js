@@ -37,13 +37,21 @@ const STEP_LABELS = [
 
 /* ---------------- previews ---------------- */
 
-function previewMarkup(w, withCaption) {
+const NOTE_MOCK = `<div class="mk mk-pad" style="display:grid;gap:8px;align-content:start">
+  <span class="mk-txt" style="width:84%"></span><span class="mk-txt" style="width:96%"></span>
+  <span class="mk-txt" style="width:72%"></span>
+  <span class="mk-txt" style="width:46%;background:var(--color-primary)"></span></div>`;
+
+const SCALES = { thumb: 0.375, review: 0.3 };
+
+function previewMarkup(w, mode) {
   if (w.img) {
     return `<img src="${w.img}" alt="${esc(w.name)} example" loading="lazy" decoding="async">` +
-      (withCaption && w.caption ? `<span class="widget-caption">${esc(w.caption)}</span>` : '');
+      (mode === 'canvas' && w.caption ? `<span class="widget-caption">${esc(w.caption)}</span>` : '');
   }
-  const fn = PREVIEWS[w.preview];
-  return fn ? fn() : '';
+  const html = w.isNote ? NOTE_MOCK : (PREVIEWS[w.preview] ? PREVIEWS[w.preview]() : '');
+  if (mode === 'canvas') return html;
+  return `<div class="mk-scale" style="--mk-s:${SCALES[mode] || 0.375}"><div class="mk-inner">${html}</div></div>`;
 }
 
 /* ---------------- toast ---------------- */
@@ -101,8 +109,8 @@ function renderPurpose() {
   $('#purpose-grid').innerHTML = PURPOSES.map((p) => `
     <button class="choice ${state.purpose === p.id ? 'is-selected' : ''}" data-purpose="${p.id}" type="button">
       <span class="choice-icon">${ICON[p.icon]}</span>
-      <span><h3>${esc(p.name)}</h3>
-      <p><b style="color:var(--color-text)">${esc(p.sub)}</b> — ${esc(p.desc)}</p></span>
+      <span><h3>${esc(p.name)}</h3><span class="choice-sub">${esc(p.sub)}</span>
+      <p>${esc(p.desc)}</p></span>
     </button>`).join('');
 
   $('#hazard-grid').innerHTML = HAZARDS.map((h) => `
@@ -137,8 +145,13 @@ function applyTemplate() {
   const t = TEMPLATES.find((x) => x.id === state.template);
   state.slots = t.slots.map((s) => ({ id: nextId(), w: s.w, h: s.h, hint: s.hint, widget: null }));
   if ($('#in-prefill').checked) {
-    const ids = [...(HAZARD_SUGGEST[state.hazard] || []), ...(SUGGESTIONS[state.purpose] || [])];
-    state.slots.forEach((slot, i) => { if (ids[i]) slot.widget = makeWidget(ids[i]); });
+    const fallback = [...(SUGGESTIONS[state.purpose] || []), ...(HAZARD_SUGGEST[state.hazard] || [])];
+    let fi = 0;
+    state.slots.forEach((slot, i) => {
+      let id = resolvePick(t.slots[i].pick, state.hazard, state.purpose, t.slots[i].hint);
+      while (!id && fi < fallback.length) { id = fallback[fi++]; }
+      if (id && WIDGET_BY_ID[id]) slot.widget = makeWidget(id);
+    });
   }
   state.selected = state.slots.find((s) => s.widget) ? state.slots.find((s) => s.widget).id : null;
 }
@@ -172,19 +185,12 @@ function renderPalette() {
     if (!items.length) return '';
     return `<section class="palette-group"><h4>${esc(g)}</h4>${items.map((w) => `
       <button class="palette-item" type="button" draggable="true" data-new="${w.id}" title="Add ${esc(w.name)}">
-        <span class="palette-thumb">${w.isNote ? noteThumb() : previewMarkup(w, false)}</span>
+        <span class="palette-thumb">${previewMarkup(w, 'thumb')}</span>
         <span class="palette-label"><b>${esc(w.name)}</b><span>${esc(w.hint)}</span>${
           w.hazard ? `<span class="tag-hazard ${w.hazard}">${w.hazard}</span>` : ''}</span>
       </button>`).join('')}</section>`;
   }).join('');
 }
-
-const noteThumb = () => `<svg viewBox="0 0 160 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-  <rect width="160" height="100" fill="var(--color-surface-2)"/>
-  <rect x="16" y="22" width="120" height="6" rx="3" fill="var(--color-text-faint)"/>
-  <rect x="16" y="40" width="100" height="6" rx="3" fill="var(--color-text-faint)"/>
-  <rect x="16" y="58" width="112" height="6" rx="3" fill="var(--color-text-faint)"/>
-  <rect x="16" y="76" width="64" height="6" rx="3" fill="var(--color-primary)"/></svg>`;
 
 function renderCanvas() {
   const c = $('#canvas');
@@ -211,7 +217,7 @@ function renderCanvas() {
         </header>
         <div class="widget-body">${w.isNote
           ? esc(slot.widget.text || 'Write your note in the panel on the right…')
-          : previewMarkup(w, true)}</div>
+          : previewMarkup(w, 'canvas')}</div>
         ${w.isNote ? '' : `<div class="widget-note ${noteFilled ? '' : 'is-empty'}">
           <span aria-hidden="true">${noteFilled ? '✎' : '!'}</span>
           <em>${noteFilled ? esc(slot.widget.need) : 'Tap to say what this must show'}</em></div>`}
@@ -461,7 +467,7 @@ function renderReview() {
       const note = w.isNote ? s.widget.text : s.widget.need;
       const meta = [s.widget.geo, s.widget.freq, s.widget.avail ? 'data: ' + (AVAILABILITY.find((a) => a.id === s.widget.avail) || {}).label : '']
         .filter(Boolean).join(' · ');
-      return `<li><span class="rl-thumb">${w.isNote ? noteThumb() : previewMarkup(w, false)}</span>
+      return `<li><span class="rl-thumb">${previewMarkup(w, 'review')}</span>
         <span style="min-width:0"><b>${esc(s.widget.title || w.name)}</b>
         <span>${note.trim() ? esc(note) : '⚠ no need written yet'}</span>
         ${meta ? `<span>${esc(meta)}</span>` : ''}</span></li>`;
@@ -601,6 +607,7 @@ function init() {
   $('#btn-rail-2').addEventListener('click', () => openSheet('rail'));
   $('#btn-open-panel').addEventListener('click', () => openSheet('panel'));
   $('#btn-close-panel').addEventListener('click', closeSheets);
+  $('#btn-close-rail').addEventListener('click', closeSheets);
 
   $$('[data-goto]').forEach((b) => b.addEventListener('click', () => goto(b.dataset.goto)));
 

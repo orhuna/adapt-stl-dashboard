@@ -1,286 +1,216 @@
 /* ADAPT-STL Design Studio — widget catalog, previews, and intake options */
 
-const SV = (body, ratio) =>
-  `<svg viewBox="0 0 160 ${ratio || 100}" preserveAspectRatio="xMidYMid slice" role="img" aria-hidden="true">${body}</svg>`;
+/* ---------- responsive HTML/CSS preview mocks ---------- */
 
-const streets = (op = 1) => `
-  <g stroke="var(--color-border)" stroke-width="1.4" opacity="${op}" fill="none">
-    <path d="M0 22H160M0 44H160M0 66H160M0 88H160"/>
-    <path d="M24 0V100M52 0V100M80 0V100M108 0V100M136 0V100"/>
-  </g>
-  <path d="M0 33 Q40 30 70 44 T160 52" stroke="var(--color-flood)" stroke-width="3.4" fill="none" opacity=".5"/>`;
+const LINE = (d, color, extra = '') =>
+  `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" vector-effect="non-scaling-stroke" ${extra}/>`;
+const PLOT = (inner) => `<div class="mk-plot"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${inner}</svg>`;
+
+const MAPBASE = `<div class="mk-map"></div>
+  <div class="mk-roads">
+    <i style="left:0;right:0;top:38%;height:3px"></i>
+    <i style="left:0;right:0;top:72%;height:2px"></i>
+    <i style="left:34%;top:0;bottom:0;width:3px"></i>
+    <i style="left:68%;top:0;bottom:0;width:2px"></i></div>
+  <div class="mk-blocks">
+    <i style="left:6%;top:8%;width:13%;height:16%"></i><i style="left:26%;top:6%;width:16%;height:12%"></i>
+    <i style="left:6%;top:44%;width:12%;height:20%"></i><i style="left:52%;top:52%;width:15%;height:16%"></i>
+    <i style="left:74%;top:18%;width:14%;height:14%"></i><i style="left:30%;top:74%;width:18%;height:14%"></i>
+    <i style="left:78%;top:66%;width:12%;height:18%"></i></div>`;
+
+const PIN = (l, t, color = 'var(--color-primary)') =>
+  `<svg class="mk-pin" style="left:${l};top:${t};color:${color}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+     <path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7z"/>
+     <circle cx="12" cy="9" r="2.6" fill="#fff"/></svg>`;
+
+const WARN = `<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+  <path d="M12 3l10 18H2L12 3z"/><path d="M11.1 9h1.8l-.25 6h-1.3L11.1 9zm.9 8.1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" fill="#fff"/></svg>`;
 
 const PREVIEWS = {
-  basemap: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface-2)"/>
-    <g fill="var(--color-surface-3)">
-      <rect x="6" y="6" width="14" height="12" rx="1"/><rect x="30" y="6" width="18" height="12" rx="1"/>
-      <rect x="6" y="26" width="14" height="14" rx="1"/><rect x="58" y="26" width="16" height="14" rx="1"/>
-      <rect x="86" y="60" width="18" height="12" rx="1"/><rect x="114" y="26" width="18" height="14" rx="1"/>
-      <rect x="30" y="72" width="16" height="14" rx="1"/>
-    </g>
-    ${streets()}
-    <g><circle cx="86" cy="46" r="9" fill="var(--color-primary)" opacity=".18"/>
-    <path d="M86 38c-3.6 0-6.5 2.9-6.5 6.5 0 4.6 6.5 11 6.5 11s6.5-6.4 6.5-11c0-3.6-2.9-6.5-6.5-6.5z" fill="var(--color-primary)"/>
-    <circle cx="86" cy="44.5" r="2.3" fill="var(--color-surface)"/></g>`),
+  basemap: () => `<div class="mk">${MAPBASE}
+    ${PIN('52%', '58%')}
+    <span class="mk-dot" style="left:30%;top:30%;width:8px;height:8px;background:var(--color-heat)"></span>
+    <span class="mk-dot" style="left:70%;top:48%;width:8px;height:8px;background:var(--color-heat)"></span>
+    <span class="mk-dot" style="left:62%;top:78%;width:8px;height:8px;background:var(--color-heat)"></span>
+    <span class="mk-chip-abs" style="left:10px;top:10px">City assets</span></div>`,
 
-  nearme: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface-2)"/>${streets(.75)}
-    <circle cx="80" cy="50" r="38" fill="var(--color-primary)" opacity=".07" stroke="var(--color-primary)" stroke-dasharray="3 3" stroke-width="1"/>
-    <circle cx="80" cy="50" r="25" fill="var(--color-primary)" opacity=".1" stroke="var(--color-primary)" stroke-dasharray="3 3" stroke-width="1"/>
-    <circle cx="80" cy="50" r="13" fill="var(--color-primary)" opacity=".16" stroke="var(--color-primary)" stroke-width="1"/>
-    <circle cx="80" cy="50" r="4.5" fill="var(--color-primary)"/>
-    <g fill="var(--color-heat)"><circle cx="56" cy="34" r="3"/><circle cx="104" cy="62" r="3"/><circle cx="98" cy="30" r="3"/></g>
-    <text x="80" y="93" text-anchor="middle" font-size="8" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif">5 / 10 / 15 min</text>`),
+  nearme: () => `<div class="mk">${MAPBASE}
+    <span class="mk-ring" style="left:50%;top:50%;width:150px;height:150px"></span>
+    <span class="mk-ring" style="left:50%;top:50%;width:98px;height:98px"></span>
+    <span class="mk-ring" style="left:50%;top:50%;width:52px;height:52px"></span>
+    <span class="mk-dot" style="left:50%;top:50%;width:12px;height:12px;background:var(--color-primary);box-shadow:0 0 0 3px var(--color-surface)"></span>
+    <span class="mk-dot" style="left:28%;top:26%;width:7px;height:7px;background:var(--color-heat)"></span>
+    <span class="mk-dot" style="left:74%;top:62%;width:7px;height:7px;background:var(--color-heat)"></span>
+    <span class="mk-chip-abs" style="left:10px;bottom:10px">5 / 10 / 15 min walk</span></div>`,
 
-  swipe: () => SV(`
-    <defs><linearGradient id="swA" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="var(--color-flood)" stop-opacity=".55"/><stop offset="1" stop-color="var(--color-flood)" stop-opacity=".2"/></linearGradient></defs>
-    <rect width="160" height="100" fill="var(--color-surface-2)"/>
-    <rect width="80" height="100" fill="url(#swA)"/>
-    <g fill="var(--color-heat)" opacity=".5"><circle cx="104" cy="34" r="13"/><circle cx="128" cy="62" r="10"/><circle cx="96" cy="72" r="8"/></g>
-    ${streets(.5)}
-    <line x1="80" y1="0" x2="80" y2="100" stroke="var(--color-surface)" stroke-width="2.5"/>
-    <circle cx="80" cy="50" r="9" fill="var(--color-surface)" stroke="var(--color-border)"/>
-    <path d="M77 46l-3 4 3 4M83 46l3 4-3 4" stroke="var(--color-text-muted)" stroke-width="1.4" fill="none"/>
-    <text x="8" y="14" font-size="7.5" font-weight="700" fill="var(--color-surface)" font-family="sans-serif">2020</text>
-    <text x="132" y="14" font-size="7.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif">2050</text>`),
+  swipe: () => `<div class="mk">${MAPBASE}
+    <span style="position:absolute;inset:0 50% 0 0;background:var(--color-flood);opacity:.34"></span>
+    <span class="mk-dot" style="left:70%;top:32%;width:52px;height:52px;background:var(--color-heat);opacity:.42;filter:blur(3px)"></span>
+    <span class="mk-dot" style="left:86%;top:66%;width:38px;height:38px;background:var(--color-heat);opacity:.42;filter:blur(3px)"></span>
+    <span class="mk-swipe-handle"></span>
+    <span class="mk-chip-abs" style="left:10px;top:10px">Today</span>
+    <span class="mk-chip-abs" style="right:10px;top:10px">2050</span></div>`,
 
-  facilities: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface-2)"/>${streets(.7)}
-    <g>
-      <g transform="translate(38,28)"><circle r="8" fill="var(--color-primary)"/><path d="M-3.5 1.5v-3h7v3z" fill="#fff"/><path d="M0-4.5l4.5 3.5h-9z" fill="#fff"/></g>
-      <g transform="translate(96,58)"><circle r="8" fill="var(--color-primary)"/><path d="M-3.5 1.5v-3h7v3z" fill="#fff"/><path d="M0-4.5l4.5 3.5h-9z" fill="#fff"/></g>
-      <g transform="translate(118,26)"><circle r="7" fill="var(--color-text-faint)"/><path d="M-3 1v-2.5h6V1z" fill="#fff"/><path d="M0-4l4 3h-8z" fill="#fff"/></g>
-    </g>
-    <rect x="6" y="70" width="88" height="24" rx="3" fill="var(--color-surface)" opacity=".95"/>
-    <rect x="10" y="74" width="42" height="4" rx="2" fill="var(--color-text-muted)"/>
-    <rect x="10" y="82" width="66" height="3" rx="1.5" fill="var(--color-text-faint)"/>
-    <rect x="10" y="88" width="52" height="3" rx="1.5" fill="var(--color-text-faint)"/>`),
+  facilities: () => `<div class="mk">${MAPBASE}
+    ${PIN('26%', '32%')}${PIN('58%', '62%')}${PIN('80%', '26%', 'var(--color-text-faint)')}
+    <div class="mk-overlay-card">
+      <div style="font-size:11px;font-weight:700;margin-bottom:5px">Nearest open site · 1.2 mi</div>
+      <div class="mk-txt" style="width:76%"></div>
+      <div class="mk-txt" style="width:54%;margin-top:5px"></div></div></div>`,
 
-  kpi: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <text x="14" y="26" font-size="9" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif" letter-spacing="1">HEAT INDEX</text>
-    <text x="14" y="60" font-size="30" font-weight="800" fill="var(--color-heat)" font-family="sans-serif">104°F</text>
-    <text x="14" y="74" font-size="9" font-weight="600" fill="var(--color-text-muted)" font-family="sans-serif">▲ 6° over threshold</text>
-    <rect x="14" y="82" width="132" height="6" rx="3" fill="var(--color-surface-3)"/>
-    <rect x="14" y="82" width="104" height="6" rx="3" fill="var(--color-heat)"/>
-    <line x1="122" y1="79" x2="122" y2="91" stroke="var(--color-text)" stroke-width="1.4"/>`),
+  draw: () => `<div class="mk">${MAPBASE}
+    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <polygon points="22,24 66,18 82,58 46,84 26,62" fill="var(--color-primary)" fill-opacity=".16"
+        stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/></svg>
+    ${['22%,24%', '66%,18%', '82%,58%', '46%,84%', '26%,62%'].map((c) => {
+      const [x, y] = c.split(',');
+      return `<span class="mk-dot" style="left:${x};top:${y};width:9px;height:9px;border-radius:2px;background:var(--color-surface);border:2px solid var(--color-primary)"></span>`;
+    }).join('')}
+    <span class="mk-chip-abs" style="right:10px;bottom:10px;background:var(--color-surface);color:var(--color-primary);border:1px solid var(--color-border)">2.4 sq mi selected</span></div>`,
 
-  timeseries: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <g stroke="var(--color-divider)" stroke-width="1"><path d="M18 22H150M18 44H150M18 66H150"/></g>
-    <path d="M18 14V84H152" stroke="var(--color-border)" stroke-width="1.2" fill="none"/>
-    <path d="M22 70 L40 62 L58 66 L76 44 L94 50 L112 30 L130 36 L148 22" fill="none" stroke="var(--color-primary)" stroke-width="2.4" stroke-linejoin="round"/>
-    <path d="M22 78 L40 74 L58 76 L76 62 L94 66 L112 54 L130 58 L148 48" fill="none" stroke="var(--color-text-faint)" stroke-width="1.6" stroke-dasharray="4 3"/>
-    <g fill="var(--color-primary)"><circle cx="112" cy="30" r="2.6"/><circle cx="148" cy="22" r="2.6"/></g>
-    <text x="18" y="95" font-size="7" fill="var(--color-text-faint)" font-family="sans-serif">Jun</text>
-    <text x="140" y="95" font-size="7" fill="var(--color-text-faint)" font-family="sans-serif">Sep</text>`),
+  kpi: () => `<div class="mk mk-kpi">
+    <div class="mk-lbl">Heat index · now</div>
+    <div class="mk-kpi-v">104°F</div>
+    <div class="mk-kpi-d">▲ 6° above action threshold</div>
+    <div class="mk-kpi-track"><span class="mk-kpi-fill"></span><span class="mk-kpi-mark"></span></div></div>`,
 
-  heatdays: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <line x1="16" y1="34" x2="152" y2="34" stroke="var(--color-heat)" stroke-width="1.2" stroke-dasharray="4 3"/>
-    <text x="118" y="30" font-size="7" font-weight="700" fill="var(--color-heat)" font-family="sans-serif">threshold</text>
-    <g>
-      <rect x="20" y="56" width="13" height="28" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="39" y="48" width="13" height="36" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="58" y="38" width="13" height="46" rx="2" fill="var(--color-warning)"/>
-      <rect x="77" y="24" width="13" height="60" rx="2" fill="var(--color-heat)"/>
-      <rect x="96" y="18" width="13" height="66" rx="2" fill="var(--color-heat)"/>
-      <rect x="115" y="30" width="13" height="54" rx="2" fill="var(--color-warning)"/>
-      <rect x="134" y="46" width="13" height="38" rx="2" fill="var(--color-text-faint)"/>
-    </g>
-    <line x1="14" y1="84" x2="152" y2="84" stroke="var(--color-border)"/>
-    <g font-size="6.5" fill="var(--color-text-faint)" font-family="sans-serif" text-anchor="middle">
-      <text x="26" y="94">Mon</text><text x="64" y="94">Wed</text><text x="102" y="94">Fri</text><text x="140" y="94">Sun</text></g>`),
+  gauge: () => `<div class="mk mk-gauge">
+    <svg viewBox="0 0 120 78" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <path d="M12 60a48 48 0 0 1 96 0" fill="none" stroke="var(--color-surface-3)" stroke-width="12" stroke-linecap="round"/>
+      <path d="M12 60a48 48 0 0 1 74 -37" fill="none" stroke="var(--color-heat)" stroke-width="12" stroke-linecap="round"/>
+      <line x1="60" y1="60" x2="86" y2="34" stroke="var(--color-text)" stroke-width="3.4" stroke-linecap="round"/>
+      <circle cx="60" cy="60" r="5" fill="var(--color-text)"/>
+      <text x="60" y="76" text-anchor="middle" font-size="15" font-weight="800"
+        fill="var(--color-text)" letter-spacing="-.4">3.7 / 5</text>
+      <text x="12" y="74" font-size="8" font-weight="700" fill="var(--color-text-faint)">LOW</text>
+      <text x="108" y="74" font-size="8" font-weight="700" text-anchor="end" fill="var(--color-text-faint)">HIGH</text>
+    </svg>
+    <div class="mk-lbl mk-gauge-cap">Vulnerability index</div></div>`,
 
-  hydrograph: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <rect x="16" y="14" width="136" height="16" fill="var(--color-heat)" opacity=".14"/>
-    <rect x="16" y="30" width="136" height="16" fill="var(--color-warning)" opacity=".16"/>
-    <rect x="16" y="46" width="136" height="16" fill="var(--color-flood)" opacity=".14"/>
-    <g font-size="6" font-weight="700" font-family="sans-serif">
-      <text x="122" y="22" fill="var(--color-heat)">MAJOR</text>
-      <text x="112" y="40" fill="var(--color-warning)">MODERATE</text>
-      <text x="124" y="57" fill="var(--color-flood)">MINOR</text></g>
-    <path d="M18 76 L34 74 L48 70 L62 58 L76 40 L90 26 L104 30 L118 42 L132 56 L150 66" fill="none" stroke="var(--color-flood)" stroke-width="2.6" stroke-linejoin="round"/>
-    <path d="M90 26 L104 30 L118 42 L132 56 L150 66" fill="none" stroke="var(--color-flood)" stroke-width="2.6" stroke-dasharray="4 3"/>
-    <line x1="90" y1="14" x2="90" y2="84" stroke="var(--color-text-muted)" stroke-width="1" stroke-dasharray="2 2"/>
-    <text x="93" y="92" font-size="6.5" fill="var(--color-text-muted)" font-family="sans-serif">forecast</text>
-    <path d="M16 14V84H152" stroke="var(--color-border)" fill="none"/>
-    <text x="4" y="50" font-size="6.5" fill="var(--color-text-faint)" font-family="sans-serif" transform="rotate(-90 8 50)">stage ft</text>`),
+  timeseries: () => `<div class="mk mk-chart">
+    <div class="mk-row"><span class="mk-lbl">Observed vs. normal</span></div>
+    ${PLOT(`${LINE('M2 78 L16 66 L30 70 L44 42 L58 50 L72 26 L86 34 L98 14', 'var(--color-primary)')}
+      ${LINE('M2 86 L16 80 L30 82 L44 66 L58 70 L72 56 L86 60 L98 48', 'var(--color-text-faint)', 'stroke-dasharray="5 4" stroke-width="1.6"')}`)}
+      <span class="mk-grid-l" style="top:0"></span><span class="mk-grid-l" style="top:50%"></span><span class="mk-grid-l" style="bottom:0"></span>
+    </div>
+    <div class="mk-axis"><span>Jun 1</span><span>Jul</span><span>Aug</span><span>Sep 30</span></div></div>`,
 
-  exceedance: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <path d="M20 16V82H152" stroke="var(--color-border)" fill="none"/>
-    <path d="M22 74 C50 72 78 60 106 40 S140 20 150 18" fill="none" stroke="var(--color-flood)" stroke-width="2.6"/>
-    <path d="M22 78 C52 76 80 68 108 50 S142 30 150 26" fill="none" stroke="var(--color-text-faint)" stroke-width="1.4" stroke-dasharray="3 3"/>
-    <g stroke-width="1.2" stroke-dasharray="4 3">
-      <line x1="20" y1="60" x2="152" y2="60" stroke="var(--color-flood)"/>
-      <line x1="20" y1="42" x2="152" y2="42" stroke="var(--color-warning)"/>
-      <line x1="20" y1="26" x2="152" y2="26" stroke="var(--color-heat)"/></g>
-    <g font-size="6" font-weight="700" font-family="sans-serif">
-      <text x="24" y="58" fill="var(--color-flood)">2-yr</text><text x="24" y="40" fill="var(--color-warning)">10-yr</text><text x="24" y="24" fill="var(--color-heat)">100-yr</text></g>
-    <text x="60" y="94" font-size="6.5" fill="var(--color-text-faint)" font-family="sans-serif">annual exceedance probability</text>`),
+  heatdays: () => `<div class="mk mk-chart">
+    <div class="mk-row"><span class="mk-lbl">7-day heat index forecast</span></div>
+    <div class="mk-plot">
+      <div class="mk-bars">
+        <i style="height:38%"></i><i style="height:50%"></i><i style="height:64%;background:var(--color-warning)"></i>
+        <i style="height:84%;background:var(--color-heat)"></i><i style="height:94%;background:var(--color-heat)"></i>
+        <i style="height:72%;background:var(--color-warning)"></i><i style="height:46%"></i></div>
+      <span class="mk-thresh" style="top:26%"><b>threshold 103°F</b></span>
+    </div>
+    <div class="mk-axis"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div></div>`,
 
-  gauge: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <path d="M42 78a38 38 0 0 1 76 0" fill="none" stroke="var(--color-surface-3)" stroke-width="12" stroke-linecap="round"/>
-    <path d="M42 78a38 38 0 0 1 60 -30" fill="none" stroke="var(--color-heat)" stroke-width="12" stroke-linecap="round"/>
-    <line x1="80" y1="78" x2="104" y2="52" stroke="var(--color-text)" stroke-width="2.4" stroke-linecap="round"/>
-    <circle cx="80" cy="78" r="4" fill="var(--color-text)"/>
-    <text x="80" y="70" text-anchor="middle" font-size="16" font-weight="800" fill="var(--color-text)" font-family="sans-serif">3.7</text>
-    <text x="80" y="94" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif" letter-spacing=".8">VULNERABILITY INDEX</text>`),
+  hydrograph: () => `<div class="mk mk-chart">
+    <div class="mk-row"><span class="mk-lbl">River stage · gauge 07010000</span></div>
+    ${PLOT(`${LINE('M2 82 L18 78 L32 70 L46 48 L58 24 L70 30 L84 52 L98 70', 'var(--color-flood)')}`)}
+      <span class="mk-band" style="top:0;height:26%;background:color-mix(in srgb, var(--color-heat) 14%, transparent)"><b style="color:var(--color-heat)">MAJOR</b></span>
+      <span class="mk-band" style="top:26%;height:24%;background:color-mix(in srgb, var(--color-warning) 16%, transparent)"><b style="color:var(--color-warning)">MODERATE</b></span>
+      <span class="mk-band" style="top:50%;height:24%;background:color-mix(in srgb, var(--color-flood) 14%, transparent)"><b style="color:var(--color-flood)">MINOR</b></span>
+      <span style="position:absolute;left:58%;top:0;bottom:0;width:1px;border-left:1px dashed var(--color-text-muted)"></span>
+    </div>
+    <div class="mk-axis"><span>−24h</span><span>now</span><span>+24h</span><span>+48h</span></div></div>`,
 
-  table: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <rect x="0" y="0" width="160" height="16" fill="var(--color-surface-2)"/>
-    <g font-size="6.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif">
-      <text x="8" y="11">NEIGHBORHOOD</text><text x="96" y="11">RISK</text><text x="128" y="11">POP</text></g>
-    ${[0, 1, 2, 3, 4].map((i) => {
-      const y = 24 + i * 15;
-      const w = [46, 40, 34, 27, 20][i];
-      const c = i < 2 ? 'var(--color-heat)' : i < 4 ? 'var(--color-warning)' : 'var(--color-text-faint)';
-      return `<rect x="8" y="${y}" width="${[52, 44, 60, 48, 40][i]}" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="96" y="${y - 1}" width="${w}" height="6" rx="3" fill="${c}"/>
-      <rect x="140" y="${y}" width="14" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <line x1="0" y1="${y + 9}" x2="160" y2="${y + 9}" stroke="var(--color-divider)"/>`;
-    }).join('')}`),
+  exceedance: () => `<div class="mk mk-chart">
+    <div class="mk-row"><span class="mk-lbl">Exceedance probability</span></div>
+    ${PLOT(`${LINE('M2 84 C26 80 48 62 68 40 S92 18 98 12', 'var(--color-flood)')}
+      ${LINE('M2 90 C28 86 52 72 72 52 S94 32 98 26', 'var(--color-text-faint)', 'stroke-dasharray="5 4" stroke-width="1.6"')}`)}
+      <span class="mk-thresh" style="top:66%;border-color:var(--color-flood)"><b style="color:var(--color-flood)">2-yr</b></span>
+      <span class="mk-thresh" style="top:40%;border-color:var(--color-warning)"><b style="color:var(--color-warning)">10-yr</b></span>
+      <span class="mk-thresh" style="top:14%"><b>100-yr</b></span>
+    </div>
+    <div class="mk-axis"><span>50%</span><span>10%</span><span>2%</span><span>1%</span></div></div>`,
 
-  alert: () => SV(`
-    <rect width="160" height="100" fill="var(--color-heat-soft)"/>
-    <rect x="0" y="0" width="4" height="100" fill="var(--color-heat)"/>
-    <path d="M28 30 L40 52 H16 Z" fill="var(--color-heat)"/>
-    <rect x="19.5" y="38" width="1.6" height="0" fill="#fff"/>
-    <text x="28" y="49" text-anchor="middle" font-size="11" font-weight="800" fill="#fff" font-family="sans-serif">!</text>
-    <text x="50" y="42" font-size="11" font-weight="800" fill="var(--color-heat)" font-family="sans-serif">EXCESSIVE HEAT</text>
-    <text x="50" y="55" font-size="8" font-weight="600" fill="var(--color-heat)" font-family="sans-serif" opacity=".85">Warning in effect until 8 PM</text>
-    <rect x="16" y="66" width="128" height="1" fill="var(--color-heat)" opacity=".25"/>
-    <text x="16" y="80" font-size="7.5" fill="var(--color-heat)" font-family="sans-serif" opacity=".8">Trigger: HI ≥ 103°F for 2+ days</text>`),
+  table: () => `<div class="mk mk-table">
+    <div class="mk-thead"><span class="n">NEIGHBORHOOD</span><span class="r">RISK SCORE</span><span class="v">POP</span></div>
+    ${[[62, 92, 'var(--color-heat)'], [54, 78, 'var(--color-heat)'], [70, 62, 'var(--color-warning)'], [50, 44, 'var(--color-warning)'], [58, 28, 'var(--color-text-faint)']]
+      .map(([n, r, c]) => `<div class="mk-trow">
+        <span class="n"><span class="mk-txt" style="width:${n}%"></span></span>
+        <span class="r"><span class="mk-bar" style="display:block;width:${r}%;background:${c}"></span></span>
+        <span class="v"><span class="mk-txt" style="width:100%"></span></span></div>`).join('')}</div>`,
 
-  timeline: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <line x1="16" y1="50" x2="146" y2="50" stroke="var(--color-border)" stroke-width="2"/>
-    <g>
-      <circle cx="24" cy="50" r="6" fill="var(--color-primary)"/>
-      <circle cx="62" cy="50" r="5" fill="var(--color-warning)"/>
-      <circle cx="100" cy="50" r="7" fill="var(--color-heat)"/>
-      <circle cx="138" cy="50" r="5" fill="var(--color-text-faint)"/></g>
-    <g font-size="7" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif" text-anchor="middle">
-      <text x="24" y="34">NOW</text><text x="62" y="34">+12h</text><text x="100" y="34">PEAK</text><text x="138" y="34">+48h</text></g>
-    <g font-size="6.5" fill="var(--color-text-faint)" font-family="sans-serif" text-anchor="middle">
-      <text x="24" y="70">monitor</text><text x="62" y="70">pre-position</text><text x="100" y="70">open centers</text><text x="138" y="70">stand down</text></g>`),
+  sensor: () => `<div class="mk">
+    <div class="mk-feed">
+      <span class="sun"></span>
+      <i style="left:8%;width:14%;height:38%"></i><i style="left:26%;width:11%;height:52%"></i>
+      <i style="left:44%;width:16%;height:32%"></i><i style="left:66%;width:12%;height:46%"></i>
+      <span style="position:absolute;left:0;right:0;bottom:0;height:26%;background:rgba(255,255,255,.07)"></span>
+      <span class="mk-live">LIVE</span></div>
+    <div class="mk-pad" style="flex:0 0 auto;padding:9px 12px">
+      <div style="font-size:12px;font-weight:700">Surface temp 118°F</div>
+      <div style="font-size:10px;color:var(--color-text-muted)">Sensor STL-07 · updated 4 min ago</div></div></div>`,
 
-  filter: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <text x="12" y="18" font-size="7.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif" letter-spacing=".8">FILTERS</text>
-    <g>
-      <rect x="12" y="28" width="136" height="4" rx="2" fill="var(--color-surface-3)"/>
-      <rect x="12" y="28" width="82" height="4" rx="2" fill="var(--color-primary)"/>
-      <circle cx="94" cy="30" r="6" fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/>
-      <rect x="12" y="48" width="136" height="4" rx="2" fill="var(--color-surface-3)"/>
-      <rect x="12" y="48" width="46" height="4" rx="2" fill="var(--color-primary)"/>
-      <circle cx="58" cy="50" r="6" fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/></g>
-    <g>
-      <rect x="12" y="66" width="10" height="10" rx="2" fill="var(--color-primary)"/>
-      <path d="M14.5 71l2 2 3.5-3.5" stroke="#fff" stroke-width="1.4" fill="none"/>
-      <rect x="28" y="69" width="44" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="12" y="82" width="10" height="10" rx="2" fill="none" stroke="var(--color-border)" stroke-width="1.5"/>
-      <rect x="28" y="85" width="56" height="4" rx="2" fill="var(--color-text-faint)"/></g>`),
+  alert: () => `<div class="mk mk-alert">
+    <span class="mk-alert-ico">${WARN}</span>
+    <span style="min-width:0">
+      <b class="mk-alert-t mk-nowrap">Excessive heat warning</b>
+      <b class="mk-alert-s mk-nowrap">In effect until 8 PM · trigger: HI ≥ 103°F for 2 days</b></span>
+    <span class="mk-alert-b">View actions</span></div>`,
 
-  search: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <rect x="10" y="14" width="116" height="20" rx="10" fill="var(--color-surface-2)" stroke="var(--color-border)"/>
-    <circle cx="24" cy="24" r="4.5" fill="none" stroke="var(--color-text-muted)" stroke-width="1.6"/>
-    <line x1="27.5" y1="27.5" x2="31" y2="31" stroke="var(--color-text-muted)" stroke-width="1.6"/>
-    <text x="36" y="27" font-size="7.5" fill="var(--color-text-faint)" font-family="sans-serif">Enter your address…</text>
-    <circle cx="140" cy="24" r="10" fill="var(--color-primary)"/>
-    <circle cx="140" cy="24" r="3.2" fill="none" stroke="#fff" stroke-width="1.5"/>
-    <path d="M140 17v3M140 28v3M133 24h3M144 24h3" stroke="#fff" stroke-width="1.5"/>
-    <g>
-      <rect x="10" y="44" width="90" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="10" y="56" width="70" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="10" y="68" width="82" height="4" rx="2" fill="var(--color-text-faint)"/>
-      <rect x="10" y="80" width="58" height="4" rx="2" fill="var(--color-text-faint)"/></g>`),
+  timeline: () => `<div class="mk mk-tl">
+    <div class="mk-tl-track">
+      <span class="mk-tl-step"><u>NOW</u><i style="background:var(--color-primary)"></i><s>monitor</s></span>
+      <span class="mk-tl-step"><u>+12h</u><i style="background:var(--color-warning)"></i><s>pre-position</s></span>
+      <span class="mk-tl-step"><u>PEAK</u><i style="background:var(--color-heat);width:16px;height:16px"></i><s>open centers</s></span>
+      <span class="mk-tl-step"><u>+48h</u><i></i><s>stand down</s></span></div></div>`,
 
-  legend: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <text x="12" y="18" font-size="7.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif" letter-spacing=".8">LAYERS &amp; LEGEND</text>
-    ${['var(--color-flood)', 'var(--color-heat)', 'var(--color-warning)', 'var(--color-success)'].map((c, i) =>
-      `<rect x="12" y="${28 + i * 16}" width="12" height="12" rx="2" fill="${c}"/>
-       <rect x="32" y="${32 + i * 16}" width="${[74, 58, 66, 48][i]}" height="4" rx="2" fill="var(--color-text-faint)"/>
-       <rect x="136" y="${31 + i * 16}" width="14" height="7" rx="3.5" fill="${i < 2 ? 'var(--color-primary)' : 'var(--color-surface-3)'}"/>
-       <circle cx="${i < 2 ? 146.5 : 139.5}" cy="${34.5 + i * 16}" r="2.6" fill="var(--color-surface)"/>`).join('')}`),
+  search: () => `<div class="mk mk-pad">
+    <div class="mk-searchbar">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
+      <span class="mk-sq">Enter your address…</span>
+      <span class="mk-locate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.4"/><path d="M12 2v3.5M12 18.5V22M2 12h3.5M18.5 12H22"/></svg></span></div>
+    <div class="mk-res">
+      <span class="mk-txt" style="width:72%"></span><span class="mk-txt" style="width:54%"></span>
+      <span class="mk-txt" style="width:64%"></span><span class="mk-txt" style="width:44%"></span></div></div>`,
 
-  draw: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface-2)"/>${streets(.7)}
-    <path d="M36 26 L104 20 L128 58 L74 82 L40 62 Z" fill="var(--color-primary)" opacity=".16" stroke="var(--color-primary)" stroke-width="2" stroke-dasharray="5 3"/>
-    <g fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="1.8">
-      <rect x="32" y="22" width="8" height="8"/><rect x="100" y="16" width="8" height="8"/>
-      <rect x="124" y="54" width="8" height="8"/><rect x="70" y="78" width="8" height="8"/><rect x="36" y="58" width="8" height="8"/></g>
-    <rect x="90" y="66" width="60" height="16" rx="3" fill="var(--color-surface)" opacity=".95"/>
-    <text x="96" y="77" font-size="8" font-weight="700" fill="var(--color-primary)" font-family="sans-serif">2.4 sq mi</text>`),
+  filter: () => `<div class="mk mk-pad">
+    <div class="mk-lbl">Filters</div>
+    <div class="mk-slider" style="margin-top:12px"><i style="width:62%"></i><b style="left:62%"></b></div>
+    <div class="mk-slider"><i style="width:34%"></i><b style="left:34%"></b></div>
+    <div class="mk-legend-row"><span class="mk-check on"></span><span class="mk-txt" style="width:46%"></span></div>
+    <div class="mk-legend-row"><span class="mk-check"></span><span class="mk-txt" style="width:58%"></span></div></div>`,
 
-  report: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <text x="12" y="18" font-size="8" font-weight="700" fill="var(--color-text)" font-family="sans-serif">Report flooding here</text>
-    <rect x="12" y="26" width="136" height="14" rx="3" fill="var(--color-surface-2)" stroke="var(--color-border)"/>
-    <rect x="18" y="31" width="52" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="12" y="44" width="66" height="26" rx="3" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-dasharray="3 3"/>
-    <g transform="translate(45,57)"><rect x="-9" y="-5" width="18" height="12" rx="2" fill="none" stroke="var(--color-text-muted)" stroke-width="1.4"/><circle r="3" fill="none" stroke="var(--color-text-muted)" stroke-width="1.4"/></g>
-    <rect x="84" y="44" width="64" height="26" rx="3" fill="var(--color-surface-2)" stroke="var(--color-border)"/>
-    <rect x="90" y="50" width="40" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="90" y="59" width="30" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="12" y="76" width="60" height="16" rx="8" fill="var(--color-primary)"/>
-    <text x="42" y="87" text-anchor="middle" font-size="8" font-weight="700" fill="var(--color-text-inverse)" font-family="sans-serif">Submit</text>`),
+  legend: () => `<div class="mk mk-pad">
+    <div class="mk-lbl">Layers &amp; legend</div>
+    ${[['var(--color-flood)', 74, 1], ['var(--color-heat)', 58, 1], ['var(--color-warning)', 66, 0], ['var(--color-success)', 48, 0]]
+      .map(([c, w, on]) => `<div class="mk-legend-row"><span class="mk-sw" style="background:${c}"></span>
+        <span class="mk-txt" style="width:${w}%"></span><span class="mk-toggle ${on ? 'on' : ''}"></span></div>`).join('')}</div>`,
 
-  assistant: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <rect x="42" y="12" width="106" height="22" rx="8" fill="var(--color-surface-2)"/>
-    <rect x="50" y="19" width="76" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="50" y="27" width="52" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="12" y="40" width="112" height="28" rx="8" fill="var(--color-primary)" opacity=".16"/>
-    <rect x="20" y="47" width="90" height="4" rx="2" fill="var(--color-primary)"/>
-    <rect x="20" y="55" width="70" height="4" rx="2" fill="var(--color-primary)" opacity=".7"/>
-    <rect x="12" y="76" width="102" height="16" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)"/>
-    <text x="20" y="87" font-size="7.5" fill="var(--color-text-faint)" font-family="sans-serif">Ask about your block…</text>
-    <circle cx="136" cy="84" r="10" fill="var(--color-primary)"/>
-    <path d="M131 84h9M136 79l5 5-5 5" stroke="#fff" stroke-width="1.6" fill="none"/>`),
+  report: () => `<div class="mk mk-pad" style="gap:8px">
+    <div style="font-size:12px;font-weight:700">Report flooding on your street</div>
+    <div class="mk-input">Where is it? (tap the map)</div>
+    <div class="mk-row" style="flex:1 1 auto;min-height:44px;align-items:stretch">
+      <div class="mk-drop" style="flex:0 0 44%">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="13" rx="2.5"/><circle cx="12" cy="13.5" r="3.4"/><path d="M8.5 7 10 4.5h4L15.5 7"/></svg></div>
+      <div class="mk-input" style="flex:1 1 auto">How deep? What is blocked?</div></div>
+    <div class="mk-btn" style="width:46%">Submit report</div></div>`,
 
-  sensor: () => SV(`
-    <rect width="160" height="100" fill="#101a24"/>
-    <rect x="0" y="0" width="160" height="66" fill="#1b2c3a"/>
-    <path d="M0 52 L44 40 L86 50 L124 34 L160 42 V66 H0Z" fill="#2a4256"/>
-    <rect x="18" y="30" width="16" height="26" fill="#39566d"/><rect x="52" y="22" width="14" height="34" fill="#436079"/>
-    <rect x="94" y="26" width="18" height="30" fill="#39566d"/>
-    <circle cx="128" cy="14" r="6" fill="#f0b429" opacity=".8"/>
-    <rect x="8" y="8" width="46" height="12" rx="3" fill="rgba(0,0,0,.5)"/>
-    <circle cx="16" cy="14" r="3" fill="#e0524c"/>
-    <text x="24" y="18" font-size="7" font-weight="700" fill="#fff" font-family="sans-serif">LIVE</text>
-    <rect x="0" y="66" width="160" height="34" fill="var(--color-surface)"/>
-    <text x="10" y="80" font-size="8" font-weight="700" fill="var(--color-text)" font-family="sans-serif">Surface temp 118°F</text>
-    <text x="10" y="92" font-size="7" fill="var(--color-text-muted)" font-family="sans-serif">Sensor STL-07 · updated 4 min ago</text>`),
+  assistant: () => `<div class="mk mk-pad" style="gap:8px">
+    <div class="mk-bub them">Which blocks in Baden are above 100°F today?</div>
+    <div class="mk-bub you">14 block groups exceed 100°F. 3 have no cooling site within a 10-minute walk.</div>
+    <div class="mk-row" style="margin-top:auto">
+      <div class="mk-input" style="flex:1 1 auto;border-radius:999px">Ask about your block…</div>
+      <span class="mk-locate"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h13M13 7l5 5-5 5"/></svg></span></div></div>`,
 
-  share: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <text x="12" y="20" font-size="8" font-weight="700" fill="var(--color-text)" font-family="sans-serif">Share this view</text>
-    ${['Print', 'PDF', 'Link'].map((t, i) =>
-      `<rect x="${12 + i * 48}" y="30" width="42" height="22" rx="6" fill="var(--color-surface-2)" stroke="var(--color-border)"/>
-       <text x="${33 + i * 48}" y="44" text-anchor="middle" font-size="7.5" font-weight="700" fill="var(--color-text-muted)" font-family="sans-serif">${t}</text>`).join('')}
-    <rect x="12" y="62" width="136" height="16" rx="4" fill="var(--color-surface-2)"/>
-    <text x="18" y="73" font-size="7" fill="var(--color-text-faint)" font-family="sans-serif">adapt-stl.org/app/heat-watch?id=…</text>
-    <rect x="12" y="84" width="52" height="10" rx="5" fill="var(--color-primary)"/>
-    <text x="38" y="92" text-anchor="middle" font-size="6.5" font-weight="700" fill="var(--color-text-inverse)" font-family="sans-serif">Copy link</text>`),
+  share: () => `<div class="mk mk-pad" style="gap:10px">
+    <div style="font-size:12px;font-weight:700">Share this view</div>
+    <div class="mk-share-btns"><i>Print</i><i>PDF</i><i>Link</i></div>
+    <div class="mk-input mk-nowrap">adapt-stl.org/app/heat-watch?id=…</div>
+    <div class="mk-btn" style="width:44%">Copy link</div></div>`,
 
-  header: () => SV(`
-    <rect width="160" height="100" fill="var(--color-surface)"/>
-    <rect x="0" y="0" width="160" height="40" fill="var(--color-primary)"/>
-    <circle cx="20" cy="20" r="9" fill="rgba(255,255,255,.28)"/>
-    <text x="36" y="18" font-size="10" font-weight="800" fill="#fff" font-family="sans-serif">Heat Watch STL</text>
-    <text x="36" y="30" font-size="7" fill="rgba(255,255,255,.8)" font-family="sans-serif">City of St. Louis · ADAPT-STL</text>
-    <rect x="12" y="52" width="104" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="12" y="62" width="132" height="4" rx="2" fill="var(--color-text-faint)"/>
-    <rect x="12" y="72" width="86" height="4" rx="2" fill="var(--color-text-faint)"/>`),
+  header: () => `<div class="mk">
+    <div class="mk-hdr-top">
+      <span class="mk-hdr-logo"></span>
+      <span style="min-width:0"><span class="mk-hdr-t mk-nowrap" style="display:block">Heat Watch St. Louis</span>
+      <span class="mk-hdr-s mk-nowrap" style="display:block">City of St. Louis · ADAPT-STL</span></span></div>
+    <div class="mk-pad" style="display:grid;gap:7px;align-content:start">
+      <span class="mk-txt" style="width:88%"></span><span class="mk-txt" style="width:96%"></span>
+      <span class="mk-txt" style="width:62%"></span></div></div>`,
 
   note: () => null,
 };
@@ -380,39 +310,95 @@ const PRIORITY = [
   { id: 'nice', label: 'Nice to have' },
 ];
 
-/* Layout templates: slot list with size + suggested widget group */
+/* Layout templates: slot list with size, hint, and a preferred starter panel.
+   Tokens beginning with @ resolve against the chosen hazard / purpose. */
 const TEMPLATES = [
   {
-    id: 'focus-map', name: 'Focus map + side rail', desc: 'One dominant map with supporting indicators down the right side. The Experience Builder classic.',
+    id: 'focus-map', name: 'Focus map + side rail',
+    desc: 'One dominant map with supporting indicators down the right side. The Experience Builder classic.',
     thumb: [[4, 3, 1], [2, 1], [2, 1], [2, 1]],
-    slots: [{ w: 4, h: 3, hint: 'main map' }, { w: 2, h: 1, hint: 'KPI or alert' }, { w: 2, h: 1, hint: 'chart' }, { w: 2, h: 1, hint: 'list or legend' }],
+    slots: [
+      { w: 4, h: 3, hint: 'main map', pick: '@hazmap' },
+      { w: 2, h: 1, hint: 'KPI or alert', pick: 'kpi' },
+      { w: 2, h: 1, hint: 'chart', pick: '@hazchart' },
+      { w: 2, h: 1, hint: 'legend or list', pick: 'legend' },
+    ],
   },
   {
-    id: 'kpi-strip', name: 'Indicator strip + map', desc: 'Three headline numbers across the top, map below, detail charts at the bottom. Good for operations rooms.',
+    id: 'kpi-strip', name: 'Indicator strip + map',
+    desc: 'Three headline numbers across the top, map below, detail charts at the bottom. Good for operations rooms.',
     thumb: [[2, 1], [2, 1], [2, 1], [6, 2, 1], [3, 1], [3, 1]],
-    slots: [{ w: 2, h: 1, hint: 'KPI' }, { w: 2, h: 1, hint: 'KPI' }, { w: 2, h: 1, hint: 'KPI' }, { w: 6, h: 2, hint: 'main map' }, { w: 3, h: 1, hint: 'chart' }, { w: 3, h: 1, hint: 'chart' }],
+    slots: [
+      { w: 2, h: 1, hint: 'KPI', pick: 'kpi' },
+      { w: 2, h: 1, hint: 'risk index', pick: 'gauge' },
+      { w: 2, h: 1, hint: 'alert or KPI', pick: 'alert' },
+      { w: 6, h: 2, hint: 'main map', pick: '@hazmap' },
+      { w: 3, h: 1, hint: 'chart', pick: '@hazchart' },
+      { w: 3, h: 1, hint: 'chart', pick: '@hazchart2' },
+    ],
   },
   {
-    id: 'compare', name: 'Side-by-side compare', desc: 'Two equal panels for heat vs. flood, today vs. 2050, or two neighborhoods, with shared context below.',
+    id: 'compare', name: 'Side-by-side compare',
+    desc: 'Two equal panels for heat vs. flood, today vs. 2050, or two neighborhoods, with shared context below.',
     thumb: [[3, 2, 1], [3, 2, 1], [3, 1], [3, 1]],
-    slots: [{ w: 3, h: 2, hint: 'map A' }, { w: 3, h: 2, hint: 'map B' }, { w: 3, h: 1, hint: 'chart A' }, { w: 3, h: 1, hint: 'chart B' }],
+    slots: [
+      { w: 3, h: 2, hint: 'map A', pick: '@hazmap' },
+      { w: 3, h: 2, hint: 'map B', pick: '@hazmap2' },
+      { w: 3, h: 1, hint: 'chart A', pick: '@hazchart' },
+      { w: 3, h: 1, hint: 'chart B', pick: '@hazchart2' },
+    ],
   },
   {
-    id: 'public-mobile', name: 'Public / phone-first', desc: 'A stacked, single-column tool a resident can use on a phone: search, answer, then what to do.',
+    id: 'public-mobile', name: 'Public / phone-first',
+    desc: 'A stacked, single-column tool a resident can use on a phone: search, answer, then what to do.',
     thumb: [[6, 1], [6, 1], [6, 2, 1], [6, 1]],
-    slots: [{ w: 6, h: 1, hint: 'title & intro' }, { w: 6, h: 1, hint: 'address search' }, { w: 6, h: 2, hint: 'map or answer' }, { w: 6, h: 1, hint: 'what to do' }],
+    slots: [
+      { w: 6, h: 1, hint: 'title & intro', pick: 'header' },
+      { w: 6, h: 1, hint: 'address search', pick: 'search' },
+      { w: 6, h: 2, hint: 'map or answer', pick: '@hazmap' },
+      { w: 6, h: 1, hint: 'what to do next', pick: 'alert' },
+    ],
   },
   {
-    id: 'ops', name: 'Operations console', desc: 'Alert banner up top, map plus timeline, and a task or route panel. Built around acting, not browsing.',
+    id: 'ops', name: 'Operations console',
+    desc: 'Alert banner up top, map plus timeline, and a task or route panel. Built around acting, not browsing.',
     thumb: [[6, 1], [4, 2, 1], [2, 2], [3, 1], [3, 1]],
-    slots: [{ w: 6, h: 1, hint: 'alert banner' }, { w: 4, h: 2, hint: 'map' }, { w: 2, h: 2, hint: 'filter or list' }, { w: 3, h: 1, hint: 'timeline' }, { w: 3, h: 1, hint: 'note' }],
+    slots: [
+      { w: 6, h: 1, hint: 'alert banner', pick: 'alert' },
+      { w: 4, h: 2, hint: 'map', pick: '@hazmap' },
+      { w: 2, h: 2, hint: 'filter or list', pick: 'table' },
+      { w: 3, h: 1, hint: 'timeline', pick: 'timeline' },
+      { w: 3, h: 1, hint: 'note', pick: 'note' },
+    ],
   },
   {
-    id: 'blank', name: 'Blank canvas', desc: 'Start empty and build the layout yourself. Add, resize and remove panels freely.',
+    id: 'blank', name: 'Blank canvas',
+    desc: 'Start empty and build the layout yourself. Add, resize and remove panels freely.',
     thumb: [[3, 1], [3, 1]],
-    slots: [{ w: 3, h: 2, hint: 'anything' }, { w: 3, h: 2, hint: 'anything' }],
+    slots: [
+      { w: 3, h: 2, hint: 'anything' },
+      { w: 3, h: 2, hint: 'anything' },
+    ],
   },
 ];
+
+/* Token resolution for template picks */
+const TOKENS = {
+  '@hazmap': { heat: 'heat-map', flood: 'flood-map', both: 'heat-map' },
+  '@hazmap2': { heat: 'facilities', flood: 'hazard-map', both: 'flood-map' },
+  '@hazchart': { heat: 'heatdays', flood: 'hydrograph', both: 'heatdays' },
+  '@hazchart2': { heat: 'timeseries', flood: 'exceedance', both: 'hydrograph' },
+};
+/* Purpose overrides for the main map slot */
+const PURPOSE_MAP = { routing: 'route-map', nearme: 'nearme', engage: 'nearme' };
+
+function resolvePick(token, hazard, purpose, hint) {
+  if (!token) return null;
+  if (token[0] !== '@') return token;
+  if (token === '@hazmap' && PURPOSE_MAP[purpose] && /map|answer/.test(hint || '')) return PURPOSE_MAP[purpose];
+  const t = TOKENS[token];
+  return t ? (t[hazard] || t.both) : null;
+}
 
 /* Recommended starter widgets per purpose + hazard */
 const SUGGESTIONS = {
