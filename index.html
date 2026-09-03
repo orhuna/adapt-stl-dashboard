@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ADAPT-STL Design Studio — Build the tool you need</title>
+<meta name="description" content="Design the heat and flood resilience geospatial tool you actually need. A hands-on sandbox for the Saint Louis Forum.">
+<meta name="theme-color" content="#0a6a72">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a6a72'/%3E%3Cpath d='M16 6l8 20H8z' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3Cpath d='M9 20h14' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f%5B%5D=satoshi@400,500,700,800&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <header class="appbar">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-label="ADAPT-STL">
+        <rect x="1" y="1" width="30" height="30" rx="8" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M16 7l7.5 18h-15L16 7z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M9.6 20.2h12.8" stroke="currentColor" stroke-width="1.8"/>
+      </svg>
+      <div class="brand-text">
+        <div class="brand-title">ADAPT-STL Design Studio</div>
+        <div class="brand-sub">Saint Louis Forum · heat &amp; flood resilience</div>
+      </div>
+    </div>
+
+    <nav class="stepper" id="stepper" aria-label="Progress"></nav>
+
+    <div class="appbar-actions">
+      <button class="btn btn-ghost btn-icon mobile-only" id="btn-open-rail" aria-label="Open widget palette" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M17.5 14.5v6M14.5 17.5h6"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-icon mobile-only" id="btn-open-panel" aria-label="Open settings panel" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>
+      </button>
+      <button class="btn btn-ghost btn-icon" id="btn-theme" aria-label="Toggle dark mode">
+        <svg id="icon-theme" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================== 1. WELCOME ===================== -->
+  <main class="screen is-active" id="screen-welcome">
+    <div class="wizard">
+      <p class="eyebrow">Saint Louis Forum · participatory design session</p>
+      <h2>Design the heat and flood tool you actually need.</h2>
+      <p class="lede">You know the decisions you have to make. This studio lets you sketch the geospatial app that would help you make them — no GIS software, no login, about 15 minutes. Everything you write becomes part of the Forum's record of what practitioners need from ADAPT-STL.</p>
+
+      <div class="hero-panel">
+        <div class="hero-steps">
+          <div class="hero-step"><span>1</span><div><h4>Pick your purpose</h4><p>What should the tool help you do, and which hazard.</p></div></div>
+          <div class="hero-step"><span>2</span><div><h4>Choose a layout</h4><p>Start from a template or a blank canvas.</p></div></div>
+          <div class="hero-step"><span>3</span><div><h4>Drop in panels</h4><p>Maps, charts, alerts, tools — with realistic previews.</p></div></div>
+          <div class="hero-step"><span>4</span><div><h4>Say what you need</h4><p>Write the data, geography and timing each panel requires.</p></div></div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn btn-primary" data-goto="purpose">Start designing</button>
+        <span class="spacer"></span>
+        <span class="nav-note">Nothing is collected until you press Submit at the end. Your board stays on this device.</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 2. PURPOSE ===================== -->
+  <main class="screen" id="screen-purpose">
+    <div class="wizard">
+      <p class="eyebrow">Step 1 of 4</p>
+      <h2>What do you want this tool to do?</h2>
+      <p class="lede">Pick the one that matches the job you'd hand this app tomorrow. This shapes which panels we suggest — you can still use anything you like later.</p>
+      <div class="card-grid" id="purpose-grid" style="margin-top: var(--space-6)"></div>
+
+      <div class="wizard-section">
+        <h3>Which hazard are you working on?</h3>
+        <p class="field-hint">The Forum is focused on extreme heat and flooding in the St. Louis region.</p>
+        <div class="hazard-grid" id="hazard-grid"></div>
+      </div>
+
+      <div class="wizard-section">
+        <h3>A little about you</h3>
+        <p class="field-hint">Optional, but it helps us report needs by role rather than as one undifferentiated group.</p>
+        <div class="card-grid">
+          <div>
+            <label class="field-label" for="in-role">Your role</label>
+            <div class="select-wrap"><select class="select-input" id="in-role"></select></div>
+          </div>
+          <div>
+            <label class="field-label" for="in-org">Organization <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></label>
+            <input class="text-input" id="in-org" type="text" autocomplete="organization" placeholder="e.g. City of St. Louis, Metro Sewer, a neighborhood group">
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button class="btn" data-goto="welcome">Back</button>
+        <button class="btn btn-primary" id="btn-to-template" disabled>Choose a layout</button>
+        <span class="spacer"></span>
+        <span class="nav-note" id="purpose-note">Select a purpose and a hazard to continue.</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 3. TEMPLATE ===================== -->
+  <main class="screen" id="screen-template">
+    <div class="wizard">
+      <p class="eyebrow">Step 2 of 4</p>
+      <h2>Start from a layout</h2>
+      <p class="lede">These are the panel arrangements real dashboards use. Pick whichever is closest — every panel can be resized, moved or removed once you're in the canvas.</p>
+      <div class="template-grid" id="template-grid" style="margin-top: var(--space-6)"></div>
+
+      <div class="wizard-nav">
+        <button class="btn" data-goto="purpose">Back</button>
+        <button class="btn btn-primary" id="btn-to-build" disabled>Open the canvas</button>
+        <span class="spacer"></span>
+        <label class="nav-note" style="display:flex;gap:var(--space-2);align-items:center;cursor:pointer">
+          <input type="checkbox" id="in-prefill" checked> Pre-fill suggested panels for my purpose
+        </label>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 4. BUILD ===================== -->
+  <main class="screen" id="screen-build">
+    <div class="builder">
+
+      <aside class="rail" id="rail">
+        <div class="rail-head">
+          <h3>Panels</h3>
+          <p id="rail-help">Drag onto the canvas, or tap a panel and then tap an empty slot.</p>
+        </div>
+        <div class="rail-body" id="palette"></div>
+      </aside>
+
+      <div class="canvas-wrap">
+        <div class="canvas-bar">
+          <span class="chip primary" id="chip-purpose">Purpose</span>
+          <span class="chip" id="chip-hazard">Hazard</span>
+          <span class="chip" id="chip-count">0 panels</span>
+          <span class="spacer"></span>
+          <button class="btn btn-sm mobile-only" id="btn-rail-2">＋ Add panel</button>
+          <button class="btn btn-sm" id="btn-add-slot">Add empty slot</button>
+          <button class="btn btn-sm btn-primary" id="btn-to-review">Review &amp; submit</button>
+        </div>
+
+        <div class="canvas-scroll">
+          <div class="app-frame">
+            <div class="app-frame-bar">
+              <div class="app-frame-dots"><i></i><i></i><i></i></div>
+              <input class="app-frame-title" id="in-app-title" value="My ADAPT-STL tool" aria-label="Name your tool">
+              <span class="chip" style="flex:0 0 auto">your app</span>
+            </div>
+            <div class="canvas-grid" id="canvas"></div>
+            <div class="canvas-actions">
+              <p class="nav-note" id="canvas-hint">Tip: click a panel to describe what it must show. Notes are what the Forum writes up — the layout alone isn't enough.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel" id="panel">
+        <div class="panel-head">
+          <h3 id="panel-title">Settings</h3>
+          <button class="btn btn-ghost btn-icon mobile-only" id="btn-close-panel" aria-label="Close panel">✕</button>
+        </div>
+        <div class="panel-tabs">
+          <button class="panel-tab is-active" data-tab="panel">Selected panel</button>
+          <button class="panel-tab" data-tab="brief">Decision brief</button>
+        </div>
+        <div class="panel-body" id="panel-body"></div>
+      </aside>
+
+    </div>
+  </main>
+
+  <!-- ===================== 5. REVIEW ===================== -->
+  <main class="screen" id="screen-review">
+    <div class="wizard">
+      <p class="eyebrow">Step 4 of 4</p>
+      <h2>Review and submit</h2>
+      <p class="lede">This is what the Forum will analyze. Fill any gaps flagged below — the written needs matter far more than the layout.</p>
+      <div id="review-body" style="margin-top: var(--space-6)"></div>
+
+      <div class="wizard-nav">
+        <button class="btn" data-goto="build">Back to canvas</button>
+        <button class="btn btn-primary" id="btn-submit">Submit my design</button>
+        <button class="btn" id="btn-download">Download my board (JSON + CSV)</button>
+        <span class="spacer"></span>
+        <span class="nav-note">Submitting shares your board and notes with the Forum research team.</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== 6. DONE ===================== -->
+  <main class="screen" id="screen-done">
+    <div class="wizard">
+      <div class="done-icon">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12.5l5.5 5.5L20 7"/></svg>
+      </div>
+      <h2>Thank you — your design is recorded.</h2>
+      <p class="lede">Read your board number out loud if a facilitator asks for it, and keep a copy for yourself if you'd like.</p>
+      <p style="margin-top: var(--space-5)"><span class="code-pill" id="done-code">—</span></p>
+      <div class="hero-panel">
+        <h3 style="font-size:var(--text-lg);margin-bottom:var(--space-3)">What happens next</h3>
+        <p class="lede" style="font-size:var(--text-sm)">Every panel note is coded against the decision it supports, the geography and update frequency it needs, and whether the underlying data exists today. The pattern across all boards becomes the Forum's findings on the data and information needs of GIS users working on extreme weather adaptation.</p>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn" id="btn-download-2">Download my copy</button>
+        <button class="btn" id="btn-restart">Design another tool</button>
+        <span class="spacer"></span>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<div class="sheet-backdrop" id="backdrop"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="catalog.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
