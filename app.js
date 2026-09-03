@@ -904,7 +904,9 @@ async function submitBoard() {
   btn.textContent = 'Submitting…';
   try {
     await fetch(CFG.collectUrl, {
-      method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      method: 'POST',
+      mode: CFG.collectMode === 'no-cors' ? 'no-cors' : 'cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(d),
     });
     state.submitted = true;
