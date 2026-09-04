@@ -16,6 +16,13 @@
  *   "panels" — one row per panel, ready for analysis in R or pandas
  */
 
+/**
+ * Set this to any private word before you deploy. You will type the same word
+ * into the gallery page to load everyone's boards. Leave it as-is only if you
+ * do not mind anyone with the /exec URL reading the submissions.
+ */
+var VIEW_KEY = 'stl-forum-2026';
+
 var BOARD_HEADERS = [
   'received_at', 'board_code', 'event', 'schema', 'started_at', 'submitted_at',
   'app_title', 'purpose', 'hazard', 'template', 'layout_mode', 'panel_count',
@@ -87,10 +94,28 @@ function doPost(e) {
   }
 }
 
-/** Lets you open the /exec URL in a browser to confirm the deployment is live. */
-function doGet() {
+/**
+ * Plain /exec URL  -> a health check, so you can confirm the deployment is live.
+ * /exec?boards=1&key=YOUR_VIEW_KEY -> every submitted board as JSON, which is
+ * what gallery.html reads to redraw the dashboards people built.
+ */
+function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var p = (e && e.parameter) || {};
   var n = ss.getSheetByName('boards') ? ss.getSheetByName('boards').getLastRow() - 1 : 0;
+
+  if (p.boards) {
+    if (String(p.key || '') !== VIEW_KEY) return json_({ ok: false, error: 'Wrong view key.' });
+    var raw = ss.getSheetByName('raw_json');
+    if (!raw || raw.getLastRow() < 2) return json_({ ok: true, boards: [] });
+    var vals = raw.getRange(2, 1, raw.getLastRow() - 1, 3).getValues();
+    var out = [];
+    for (var i = 0; i < vals.length; i++) {
+      try { out.push(JSON.parse(vals[i][2])); } catch (err) { /* skip a bad row */ }
+    }
+    return json_({ ok: true, count: out.length, boards: out });
+  }
+
   return json_({ ok: true, service: 'ADAPT-STL collector', boardsReceived: Math.max(0, n) });
 }
 

@@ -30,4 +30,15 @@ window.ADAPT_CONFIG = {
   /* If true, participants also get a file download after a
      successful POST (belt-and-braces backup). */
   alwaysDownload: false,
+
+  /* READING THE BOARDS BACK ----------------------------------
+     gallery.html redraws every dashboard people built, with the
+     notes they wrote under each panel. It reads the sheet through
+     the same Apps Script web app. This must match VIEW_KEY at the
+     top of server/google-apps-script.gs.
+
+     This value ships to the browser, so it is a convenience, not a
+     secret. Leave it '' if you would rather type the key by hand
+     on the gallery page and keep it out of the public files.     */
+  viewKey: '',
 };
