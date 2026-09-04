@@ -92,6 +92,29 @@ Once loaded you can filter by hazard and purpose, sort by date or panel count, d
 
 Everything happens in your browser. No board data is sent anywhere by this page.
 
+### Getting the board configurations out
+
+The Sheet holds the same board three ways, so pick whichever suits the question:
+
+- **`panels` tab** — one row per panel, 41 columns. `row_index` / `col_index` reconstruct rows-and-columns boards exactly; `pos_x` / `pos_y` / `width_px` / `height_px` / `surface_width_px` do the same for free-layout boards. This is the tidy analysis table.
+- **`boards` tab** — one row per submission, 32 columns. Board-level metadata, the decision brief and the whole report block. Join to `panels` on `board_code`.
+- **`raw_json` tab** — the complete original submission as a JSON string, one row per board. Nothing is ever lost here, even if a later schema drops a field.
+
+Export any tab with **File → Download → Comma-separated values**.
+
+**`tools/boards.py`** turns any of those three into board objects, text diagrams of each layout, or reshaped CSVs:
+
+```bash
+# straight from the deployed script
+python tools/boards.py --url "https://script.google.com/macros/s/AKfy.../exec" --key stl-forum-2026 --layout
+
+# or from a downloaded tab
+python tools/boards.py --raw-csv raw_json.csv --layout
+python tools/boards.py --panels-csv panels.csv --wide boards_wide.csv --tidy panels_tidy.csv
+```
+
+`--layout` prints each board as an ASCII picture with the panels sized to their real column widths and each person's note underneath the panel it belongs to. `--wide` writes one row per board with a `layout` string like `alert / heat-map | table / timeline`, which is directly countable. `--tidy` writes one row per panel with `visual_row` / `visual_col` filled in for **both** layout modes — in free layout it bands panels whose vertical centres are within 60 px, so a free-form board becomes comparable to a template one. `--json-dir` dumps one `.json` per board, which `gallery.html` will accept by drag-and-drop.
+
 ### Getting the data out
 
 - **CSV**: in the sheet, open the `panels` tab and choose **File → Download → Comma-separated values**. That is your tidy panel-level table, one row per panel, grouped by `board_code`.
