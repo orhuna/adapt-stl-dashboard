@@ -97,20 +97,33 @@ Print the QR code at A5 or larger and put one on every table. Test one scan on t
 
 ## Export schema
 
-Schema id: `adapt-stl-design-studio/v4`.
+Schema id: `adapt-stl-design-studio/v5`.
 
-The JSON keeps the full board (design metadata + ordered panel array + decision brief). The CSV is one row per panel with 37 columns, ready to load straight into R or pandas:
+The JSON keeps the full board (design metadata + ordered panel array + decision brief). The CSV is one row per panel with 47 columns, ready to load straight into R or pandas:
 
 ```
 board_code, event, submitted_at, app_title, purpose, hazard, template,
 role, organization, decision, action, audience, open_frequency,
-missing_data, barrier, contact, panel_order, panel_type, panel_type_name,
+missing_data, barrier, contact,
+report_wanted, report_name, report_audience, report_cadence, report_formats,
+report_length, report_sections, report_must_include, report_who_writes, report_pain,
+panel_order, panel_type, panel_type_name,
 panel_category, panel_hazard_tag, panel_title, need_text, data_needed,
 geography, freshness, data_availability, priority, layout_mode,
 row_index, col_index, width_cols, height_rows, pos_x, pos_y, width_px, height_px
 ```
 
 In rows & columns mode, `row_index` (1-based, top to bottom) and `col_index` (1-based, left to right within that row) give you the exact arrangement: two panels sharing a `row_index` were placed **side by side**, and consecutive `row_index` values were **stacked**. `width_cols` is that panel's share of its row out of six. The pixel columns are blank in this mode.
+
+### The report block (new in v5)
+
+Ten of the columns describe a **document**, not a screen. A participant reaches them in three ways: choosing "Produce a report or briefing" as their purpose, choosing the "Report / briefing document" layout, or dropping any of the five report panels (`rep-cover`, `rep-figure`, `rep-narrative`, `rep-method`, `rep-deliver`) onto the canvas. Any of those makes the **Report** tab in the right-hand properties panel light up with a dot, and the review screen warns them if they leave it blank.
+
+`report_wanted` is `yes` / `no` and is the board-level filter. `report_sections` is the important one: a semicolon-separated list drawn from a fixed checklist of sixteen options — executive summary, map figures, charts & trends, data tables, headline numbers, event log, equity & who was affected, recommendations, actions taken & status, methods & data sources, caveats & uncertainty, cost / budget implications, comparison to last period, photos from the field, technical appendix, contacts & next steps. Because it is a closed list, it can be counted directly without coding. `report_formats` is likewise closed: PDF document, one-page summary, slide deck, email digest, web page / link, editable Word doc, printed handout.
+
+The free-text fields — `report_audience`, `report_must_include`, `report_who_writes`, `report_pain` — are where the reporting burden shows up. `report_pain` in particular tends to produce the most quotable material in the whole instrument, because assembling recurring hazard reports by hand is a chore nearly everyone recognises.
+
+**Facilitator prompt for the room:** "If your director only ever reads one page about this, what is on that page, and how often does it land on their desk?" That question reliably pulls people into the Report tab without you having to explain it.
 
 ### Seeing the dashboards, not just the text
 
@@ -137,7 +150,8 @@ Suggested analysis frame:
 3. **Spatial support** — distribution of `geography`. Expect a gap between the unit practitioners ask for (parcel, block, street segment) and the unit most published hazard data is served at (tract, county).
 4. **Data gap** — `data_availability` = "not sure" / "does not exist" is the direct measure of perceived data gaps; `missing_data` gives the qualitative content.
 5. **Decision linkage** — code `need_text` → `decision` → `action` triples to test whether requested map functions actually connect to a stated action, or stop at situational awareness.
-6. **Layout as evidence** — compare `layout_mode`, `row_index`/`col_index` groupings, and `pos_x`/`width_px` within free-layout boards. Which panels people insisted on seeing side by side is a direct read on which pieces of information they compare in the same glance. Whether a participant accepted a template, rearranged it, or started from the empty free canvas is a signal about how well existing dashboard conventions fit their mental model; the panel they made biggest and put top-left is usually the one they actually care about.
+6. **Screen vs. document demand** — cross-tabulate `report_wanted` against `purpose` and `role`. The interesting result is how many people who asked for a *dashboard* also want a *document* out of it: it distinguishes interactive exploration needs from reporting-and-accountability needs, which is a distinction the dashboard literature tends to collapse. Count `report_sections` directly (closed list, no coding needed) to rank what the document must contain, and cross it against `report_cadence` to separate event-driven reporting from routine compliance reporting. Code `report_pain` for the manual-labour bottleneck.
+7. **Layout as evidence** — compare `layout_mode`, `row_index`/`col_index` groupings, and `pos_x`/`width_px` within free-layout boards. Which panels people insisted on seeing side by side is a direct read on which pieces of information they compare in the same glance. Whether a participant accepted a template, rearranged it, or started from the empty free canvas is a signal about how well existing dashboard conventions fit their mental model; the panel they made biggest and put top-left is usually the one they actually care about.
 7. **Adoption barriers** — thematic coding of `barrier`, cross-tabulated with `role` and `organization` type.
 
 Report `panel_hazard_tag` splits (heat / flood / neither) to show whether the two hazards generate different information needs or converge on a common core.

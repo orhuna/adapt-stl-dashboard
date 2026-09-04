@@ -212,6 +212,45 @@ const PREVIEWS = {
       <span class="mk-txt" style="width:88%"></span><span class="mk-txt" style="width:96%"></span>
       <span class="mk-txt" style="width:62%"></span></div></div>`,
 
+  repcover: () => `<div class="mk">
+    <div class="mk-rep-cover">
+      <span class="mk-rep-eyebrow">Quarterly briefing \u00b7 Q3</span>
+      <span class="mk-rep-title">Heat &amp; Flood Resilience Report</span>
+      <span class="mk-rep-sub">City of St. Louis \u00b7 prepared for the Board of Aldermen</span></div>
+    <div class="mk-pad" style="display:grid;gap:7px;align-content:start">
+      <span class="mk-lbl">Key findings</span>
+      <span class="mk-txt" style="width:94%"></span><span class="mk-txt" style="width:86%"></span>
+      <span class="mk-txt" style="width:72%"></span></div></div>`,
+
+  repfigure: () => `<div class="mk mk-pad" style="gap:7px">
+    <span class="mk-rep-fignum">Figure 1</span>
+    <div class="mk-rep-fig">${MAPBASE}
+      <span class="mk-dot" style="left:32%;top:34%;width:9px;height:9px;background:var(--color-heat)"></span>
+      <span class="mk-dot" style="left:64%;top:52%;width:9px;height:9px;background:var(--color-heat)"></span>
+      <span class="mk-chip-abs" style="left:8px;top:8px">Heat index \u2265 103\u00b0F</span></div>
+    <span class="mk-rep-cap">Block groups exceeding the heat-advisory threshold, July 2026.</span></div>`,
+
+  repnarr: () => `<div class="mk mk-pad" style="gap:8px;align-content:start">
+    <span class="mk-lbl">Findings &amp; recommendations</span>
+    <span class="mk-txt" style="width:96%"></span><span class="mk-txt" style="width:90%"></span>
+    <span class="mk-txt" style="width:82%"></span>
+    <div class="mk-rep-rec"><b>1</b><span class="mk-txt" style="width:88%"></span></div>
+    <div class="mk-rep-rec"><b>2</b><span class="mk-txt" style="width:74%"></span></div>
+    <div class="mk-rep-rec"><b>3</b><span class="mk-txt" style="width:80%"></span></div></div>`,
+
+  repmethod: () => `<div class="mk mk-pad" style="gap:7px;align-content:start">
+    <span class="mk-lbl">Data sources &amp; caveats</span>
+    ${[['Landsat LST', 'monthly'], ['USGS gauges', 'live'], ['ACS 2024', 'annual'], ['311 reports', 'daily']]
+      .map(([a, b]) => `<div class="mk-rep-src"><span>${a}</span><i>${b}</i></div>`).join('')}
+    <span class="mk-rep-cap" style="margin-top:2px">Modeled depths are indicative, not regulatory.</span></div>`,
+
+  repdeliver: () => `<div class="mk mk-pad" style="gap:9px;align-content:start">
+    <span class="mk-lbl">Delivery</span>
+    <div class="mk-rep-row"><span>Format</span><i>PDF + one-page summary</i></div>
+    <div class="mk-rep-row"><span>Every</span><i>Month, and after each event</i></div>
+    <div class="mk-rep-row"><span>Goes to</span><i>EOC, aldermen, health dept.</i></div>
+    <div class="mk-btn" style="width:52%">Generate report</div></div>`,
+
   note: () => null,
 };
 
@@ -252,13 +291,20 @@ const WIDGETS = [
   { id: 'assistant', group: 'Tools & interaction', name: 'Ask-a-question assistant', hint: 'Plain-language querying', preview: 'assistant', w: 2, h: 2 },
   { id: 'share', group: 'Tools & interaction', name: 'Print / share / export', hint: 'Take it into a meeting', preview: 'share', w: 2, h: 1 },
 
+  // --- Report & briefing ---
+  { id: 'rep-cover', group: 'Report & briefing', name: 'Report cover & summary', hint: 'Title, period, headline findings', preview: 'repcover', w: 3, h: 2 },
+  { id: 'rep-figure', group: 'Report & briefing', name: 'Map figure with caption', hint: 'A map that goes in the document', preview: 'repfigure', w: 3, h: 2 },
+  { id: 'rep-narrative', group: 'Report & briefing', name: 'Findings & recommendations', hint: 'The written argument', preview: 'repnarr', w: 3, h: 2 },
+  { id: 'rep-method', group: 'Report & briefing', name: 'Data sources & caveats', hint: 'Provenance, limits, uncertainty', preview: 'repmethod', w: 2, h: 2 },
+  { id: 'rep-deliver', group: 'Report & briefing', name: 'Delivery & distribution', hint: 'Format, cadence, who receives it', preview: 'repdeliver', w: 2, h: 2 },
+
   // --- Text & notes ---
   { id: 'header', group: 'Text & notes', name: 'Title & intro text block', hint: 'Name and frame the tool', preview: 'header', w: 4, h: 1 },
   { id: 'note', group: 'Text & notes', name: 'Decision note (text only)', hint: 'Anything the widgets miss', isNote: true, w: 2, h: 1 },
 ];
 
 const WIDGET_BY_ID = Object.fromEntries(WIDGETS.map((w) => [w.id, w]));
-const GROUP_ORDER = ['Maps & scenes', 'Charts & indicators', 'Alerts & timing', 'Tools & interaction', 'Text & notes'];
+const GROUP_ORDER = ['Maps & scenes', 'Charts & indicators', 'Alerts & timing', 'Report & briefing', 'Tools & interaction', 'Text & notes'];
 
 /* ---------- Intake options ---------- */
 
@@ -270,6 +316,7 @@ const ICON = {
   plan: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20V9M10 20V4M16 20v-7M22 20H2"/></svg>',
   bell: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 9a6 6 0 1 1 12 0c0 4 1.5 6 1.5 6H4.5S6 13 6 9z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>',
   people: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16 5.5a3.2 3.2 0 0 1 0 6.4M17 14.8c2.4.6 4 2.6 4 5.2"/></svg>',
+  doc: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 2.5h7.5L19 8v13.5H6z"/><path d="M13.5 2.5V8H19"/><path d="M9 13h7M9 16.5h7"/></svg>',
   sun: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M5 5l1.8 1.8M17.2 17.2 19 19M19 5l-1.8 1.8M6.8 17.2 5 19"/></svg>',
   wave: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 8c2.5-2.4 5-2.4 7.5 0S17 10.4 22 8M2 14c2.5-2.4 5-2.4 7.5 0s5 2.4 12.5 0M2 20c2.5-2.4 5-2.4 7.5 0s5 2.4 12.5 0"/></svg>',
   both: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>',
@@ -282,6 +329,7 @@ const PURPOSES = [
   { id: 'decide', icon: 'decide', name: 'Decide and trigger action', sub: 'Operational decision support', desc: 'Thresholds, triggers and checklists that tell an operator what to do and when to do it.' },
   { id: 'plan', icon: 'plan', name: 'Prioritize investment', sub: 'Planning & capital prioritization', desc: 'Compare neighborhoods or projects, rank need, and justify where money and interventions go.' },
   { id: 'monitor', icon: 'bell', name: 'Watch and warn', sub: 'Monitoring & early warning', desc: 'Continuous monitoring of gauges, forecasts and sensors that pushes alerts when limits are crossed.' },
+  { id: 'report', icon: 'doc', name: 'Produce a report or briefing', sub: 'Reporting & documentation', desc: 'A recurring or one-off document \u2014 PDF, briefing, council memo, grant appendix \u2014 that packages the maps, numbers and findings for people who will never open a dashboard.' },
   { id: 'engage', icon: 'people', name: 'Engage the community', sub: 'Communication & reporting', desc: 'Explain risk to the public, collect lived-experience reports, and build trust in the data.' },
 ];
 
@@ -308,6 +356,42 @@ const PRIORITY = [
   { id: 'must', label: 'Must have' },
   { id: 'should', label: 'Important' },
   { id: 'nice', label: 'Nice to have' },
+];
+
+/* ---------- Report / briefing options ---------- */
+
+const REPORT_FORMATS = [
+  { id: 'pdf', label: 'PDF document' },
+  { id: 'onepager', label: 'One-page summary' },
+  { id: 'slides', label: 'Slide deck' },
+  { id: 'email', label: 'Email digest' },
+  { id: 'web', label: 'Web page / link' },
+  { id: 'word', label: 'Editable Word doc' },
+  { id: 'print', label: 'Printed handout' },
+];
+
+const REPORT_CADENCE = ['', 'One-off / on demand', 'After every event', 'Daily during an event', 'Weekly', 'Monthly', 'Quarterly', 'Seasonally (before heat / storm season)', 'Annually', 'Not sure'];
+
+const REPORT_LENGTH = ['', '1 page', '2\u20134 pages', '5\u201310 pages', '10\u201325 pages', 'Longer / full study', 'As long as it needs to be'];
+
+/* The checklist of what a participant wants inside the report. */
+const REPORT_SECTIONS = [
+  { id: 'summary', label: 'Executive summary', hint: 'The answer in one paragraph' },
+  { id: 'maps', label: 'Map figures', hint: 'With captions and a legend' },
+  { id: 'charts', label: 'Charts & trends', hint: 'Time series, comparisons' },
+  { id: 'tables', label: 'Data tables', hint: 'Ranked places, counts, values' },
+  { id: 'kpis', label: 'Headline numbers', hint: 'The 3\u20135 figures people quote' },
+  { id: 'events', label: 'Event log / what happened', hint: 'Dates, durations, severity' },
+  { id: 'equity', label: 'Equity & who was affected', hint: 'Demographics, vulnerability' },
+  { id: 'recs', label: 'Recommendations', hint: 'What we should do next' },
+  { id: 'actions', label: 'Actions taken & status', hint: 'What we already did' },
+  { id: 'methods', label: 'Methods & data sources', hint: 'Provenance and vintage' },
+  { id: 'caveats', label: 'Caveats & uncertainty', hint: 'What the data cannot say' },
+  { id: 'cost', label: 'Cost / budget implications', hint: 'Dollars attached to the ask' },
+  { id: 'compare', label: 'Comparison to last period', hint: 'Better or worse than last year' },
+  { id: 'photos', label: 'Photos from the field', hint: 'Ground truth imagery' },
+  { id: 'appendix', label: 'Technical appendix', hint: 'Full tables, model detail' },
+  { id: 'contacts', label: 'Contacts & next steps', hint: 'Who to call' },
 ];
 
 /* Layout templates: slot list with size, hint, and a preferred starter panel.
@@ -372,6 +456,18 @@ const TEMPLATES = [
     ],
   },
   {
+    id: 'report-doc', name: 'Report / briefing document',
+    desc: 'Laid out like a document rather than a screen: cover and summary, map and chart figures, the written findings, and a sources-and-caveats block.',
+    thumb: [[6, 1], [3, 2, 1], [3, 2, 1], [4, 2], [2, 2]],
+    slots: [
+      { w: 6, h: 1, hint: 'cover & summary', pick: 'rep-cover' },
+      { w: 3, h: 2, hint: 'map figure', pick: 'rep-figure' },
+      { w: 3, h: 2, hint: 'chart figure', pick: '@hazchart' },
+      { w: 4, h: 2, hint: 'findings & recommendations', pick: 'rep-narrative' },
+      { w: 2, h: 2, hint: 'sources & caveats', pick: 'rep-method' },
+    ],
+  },
+  {
     id: 'blank', name: 'Blank canvas (rows & columns)',
     desc: 'Start empty and build it yourself. Stack panels in rows, sit them side by side, or mix the two \u2014 nothing overlaps.',
     thumb: [[3, 1], [3, 1]],
@@ -422,6 +518,7 @@ const SUGGESTIONS = {
   plan: ['table', 'pie-chart', 'gauge', 'draw'],
   monitor: ['alert', 'sensor', 'timeseries', 'kpi'],
   engage: ['header', 'report', 'nearme', 'assistant'],
+  report: ['rep-cover', 'rep-figure', 'rep-narrative', 'rep-deliver'],
 };
 const HAZARD_SUGGEST = {
   heat: ['heat-map', 'heatdays', 'facilities'],

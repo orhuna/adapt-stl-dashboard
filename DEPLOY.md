@@ -178,6 +178,18 @@ Printing rules that actually matter at an event:
 
 ---
 
+## A9. After a schema change (v5 — the report block)
+
+The export grew from 37 to 47 columns when the report questions were added. If your Google Sheet was created before that:
+
+1. Open **Extensions → Apps Script** on the Sheet.
+2. Replace the whole file with the current `server/google-apps-script.gs` from the site files.
+3. **Deploy → Manage deployments → pencil icon → Version: New version → Deploy.** Keep the same deployment so the URL in `config.js` still works.
+4. Delete the old `boards` and `panels` tabs, or rename them `boards_v4` / `panels_v4`. The script writes its header row only when a tab is empty, so an old tab keeps its old, now-wrong headers.
+5. Submit one test board from your phone and confirm the new `report_*` columns appear.
+
+Boards submitted under v4 still load in the gallery; they simply show no report block.
+
 ## E. Cost and limits
 
 | Piece | Free tier | Where you would hit a wall |

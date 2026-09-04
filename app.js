@@ -26,6 +26,10 @@ const state = {
   tab: 'panel',
   search: '',
   brief: { decision: '', action: '', who: '', frequency: '', missing: '', barrier: '', contact: '' },
+  report: {
+    wanted: false, name: '', audience: '', cadence: '', formats: [], length: '',
+    sections: [], mustInclude: '', whoWrites: '', painToday: '',
+  },
   submitted: false,
 };
 
@@ -682,9 +686,128 @@ function seg(id, value, options, label, hint) {
       `<button type="button" data-val="${o.id}" class="${value === o.id ? 'is-active' : ''}">${esc(o.label)}</button>`).join('')}</div></div>`;
 }
 
+const REPORT_WIDGETS = ['rep-cover', 'rep-figure', 'rep-narrative', 'rep-method', 'rep-deliver'];
+
+/* A board is "about a report" if they chose the reporting purpose, picked the
+   report layout, or dropped any report panel on the canvas. */
+function reportImplied() {
+  return state.purpose === 'report' || state.template === 'report-doc'
+    || state.slots.some((s) => s.widget && REPORT_WIDGETS.indexOf(s.widget.type) > -1);
+}
+
+function reportFilled() {
+  const r = state.report;
+  return !!(r.name.trim() || r.audience.trim() || r.cadence || r.formats.length
+    || r.sections.length || r.mustInclude.trim() || r.painToday.trim());
+}
+
+function syncReportTab() {
+  const tab = $('.panel-tab[data-tab="report"]');
+  if (tab) tab.classList.toggle('has-dot', reportImplied() && !reportFilled());
+}
+
+function check(id, on, label, hint) {
+  return `<label class="rep-check ${on ? 'is-on' : ''}">
+    <input type="checkbox" data-rep-section="${id}" ${on ? 'checked' : ''}>
+    <span style="min-width:0"><b>${esc(label)}</b><span>${esc(hint)}</span></span></label>`;
+}
+
+function renderReport() {
+  $('#panel-title').textContent = 'Report / briefing';
+  const r = state.report;
+  const on = r.wanted || reportImplied();
+  const body = $('#panel-body');
+
+  body.innerHTML = `
+    <p class="panel-note">Plenty of the work never lives on a screen. If what you actually need is a document somebody reads in a meeting, describe it here.</p>
+
+    <div class="form-row">
+      <label class="rep-check ${on ? 'is-on' : ''}">
+        <input type="checkbox" id="rep-wanted" ${on ? 'checked' : ''}>
+        <span style="min-width:0"><b>This tool should also produce a report</b>
+        <span>A PDF, briefing, memo, deck or printed handout generated from the panels on your canvas.</span></span></label>
+    </div>
+
+    ${!on ? '<div class="rep-off">Tick the box above and the report questions appear.</div>' : `
+    <div class="form-row"><label class="field-label" for="rep-name">What is the report called?</label>
+      <p class="field-hint">e.g. "Monthly heat &amp; cooling-center briefing" or "Post-flood damage memo".</p>
+      <input class="text-input" id="rep-name" value="${esc(r.name)}" placeholder="Name the document"></div>
+
+    <div class="form-row"><label class="field-label" for="rep-audience">Who reads it, and what do they do after?</label>
+      <p class="field-hint">Name the room. A report for aldermen is a different document from one for field crews.</p>
+      <textarea class="textarea-input" id="rep-audience" style="min-height:70px">${esc(r.audience)}</textarea></div>
+
+    ${sel('rep-cadence', r.cadence, REPORT_CADENCE, 'How often is it produced?')}
+
+    <p class="panel-section-title">What form does it take?</p>
+    <p class="field-hint" style="margin-bottom:var(--space-2)">Pick every one that applies.</p>
+    <div class="rep-checks">${REPORT_FORMATS.map((f) =>
+      `<label class="rep-check ${r.formats.indexOf(f.id) > -1 ? 'is-on' : ''}" style="align-items:center">
+        <input type="checkbox" data-rep-format="${f.id}" ${r.formats.indexOf(f.id) > -1 ? 'checked' : ''}>
+        <span><b>${esc(f.label)}</b></span></label>`).join('')}</div>
+
+    ${sel('rep-length', r.length, REPORT_LENGTH, 'Roughly how long?')}
+
+    <p class="panel-section-title">What goes in it?</p>
+    <p class="field-hint" style="margin-bottom:var(--space-2)">Tick everything the document must contain. This checklist is one of the things the Forum compares across boards.</p>
+    <div class="rep-checks">${REPORT_SECTIONS.map((s) =>
+      check(s.id, r.sections.indexOf(s.id) > -1, s.label, s.hint)).join('')}</div>
+
+    <div class="form-row"><label class="field-label" for="rep-must">Anything specific it must include?</label>
+      <p class="field-hint">The number, map, table or sentence that has to be in there or the report is useless.</p>
+      <textarea class="textarea-input" id="rep-must">${esc(r.mustInclude)}</textarea></div>
+
+    <div class="form-row"><label class="field-label" for="rep-who">Who assembles it today, and how long does it take?</label>
+      <input class="text-input" id="rep-who" value="${esc(r.whoWrites)}" placeholder="e.g. one analyst, three days, by hand"></div>
+
+    <div class="form-row"><label class="field-label" for="rep-pain">What makes it painful right now?</label>
+      <p class="field-hint">Copy-pasting screenshots, chasing data owners, reformatting every time, no time before the meeting…</p>
+      <textarea class="textarea-input" id="rep-pain">${esc(r.painToday)}</textarea></div>
+    `}`;
+
+  bindReport();
+}
+
+function bindReport() {
+  const r = state.report;
+  const w = $('#rep-wanted');
+  if (w) w.addEventListener('change', () => {
+    r.wanted = w.checked;
+    renderReport(); syncReportTab();
+  });
+
+  [['rep-name', 'name'], ['rep-audience', 'audience'], ['rep-cadence', 'cadence'],
+   ['rep-length', 'length'], ['rep-must', 'mustInclude'], ['rep-who', 'whoWrites'],
+   ['rep-pain', 'painToday']].forEach(([id, key]) => {
+    const el = $('#' + id);
+    if (!el) return;
+    el.addEventListener('input', () => { r[key] = el.value; syncReportTab(); });
+    el.addEventListener('change', () => { r[key] = el.value; syncReportTab(); });
+  });
+
+  const toggle = (attr, list) => {
+    $$(`[data-${attr}]`).forEach((el) => {
+      el.addEventListener('change', () => {
+        const id = el.dataset[attr === 'rep-section' ? 'repSection' : 'repFormat'];
+        const i = list.indexOf(id);
+        if (el.checked && i < 0) list.push(id);
+        if (!el.checked && i > -1) list.splice(i, 1);
+        el.closest('.rep-check').classList.toggle('is-on', el.checked);
+        r.wanted = true;
+        syncReportTab();
+      });
+    });
+  };
+  toggle('rep-section', r.sections);
+  toggle('rep-format', r.formats);
+}
+
 function renderPanel() {
   $$('.panel-tab').forEach((t) => t.classList.toggle('is-active', t.dataset.tab === state.tab));
+  syncReportTab();
   const body = $('#panel-body');
+
+  if (state.tab === 'report') { renderReport(); syncReportTab(); return; }
 
   if (state.tab === 'brief') {
     $('#panel-title').textContent = 'Decision brief';
@@ -984,10 +1107,11 @@ function renderReview() {
   const b = state.brief;
 
   $('#review-body').innerHTML = `
-    ${!b.decision.trim() || missingNotes.length
+    ${!b.decision.trim() || missingNotes.length || (reportImplied() && !reportFilled())
       ? `<div class="warn-box">Before you submit: ${[
           !b.decision.trim() ? 'the decision brief has no decision written yet' : '',
           missingNotes.length ? `${missingNotes.length} panel${missingNotes.length > 1 ? 's have' : ' has'} no written need` : '',
+          reportImplied() && !reportFilled() ? 'your board involves a report but the Report tab is empty' : '',
         ].filter(Boolean).join(' · ')}. The written parts are what we analyze.</div>`
       : ''}
 
@@ -1011,6 +1135,28 @@ function renderReview() {
         <span>${note.trim() ? esc(note) : '⚠ no need written yet'}</span>
         ${meta ? `<span>${esc(meta)}</span>` : ''}</span></li>`;
     }).join('') || '<li><span>No panels yet — go back and add a few.</span></li>'}</ul>
+
+    ${(state.report.wanted || reportImplied()) ? `
+      <h3 style="font-size:var(--text-lg);margin:var(--space-8) 0 var(--space-3)">Report or briefing</h3>
+      <div class="review-grid">
+        <div class="summary-card"><h4>Document</h4><p>${esc(state.report.name || 'Not named yet')}</p></div>
+        <div class="summary-card"><h4>Produced</h4><p>${esc(state.report.cadence || 'Not set')}</p></div>
+        <div class="summary-card"><h4>Format</h4><p>${state.report.formats.length
+          ? esc(state.report.formats.map((id) => (REPORT_FORMATS.find((f) => f.id === id) || {}).label).join(', '))
+          : 'Not set'}</p></div>
+        <div class="summary-card"><h4>Length</h4><p>${esc(state.report.length || 'Not set')}</p></div>
+      </div>
+      <p class="field-label" style="margin-top:var(--space-5)">What goes in it</p>
+      ${state.report.sections.length
+        ? `<div class="rep-tags">${state.report.sections.map((id) => {
+            const s = REPORT_SECTIONS.find((x) => x.id === id);
+            return `<span class="chip">${esc(s ? s.label : id)}</span>`;
+          }).join('')}</div>`
+        : '<p class="field-hint">Nothing ticked yet — open the Report tab on the canvas and say what the document must contain.</p>'}
+      ${state.report.audience.trim() ? `<p class="field-hint" style="margin-top:var(--space-3)"><b>Who reads it:</b> ${esc(state.report.audience)}</p>` : ''}
+      ${state.report.mustInclude.trim() ? `<p class="field-hint"><b>Must include:</b> ${esc(state.report.mustInclude)}</p>` : ''}
+      ${state.report.painToday.trim() ? `<p class="field-hint"><b>Painful today:</b> ${esc(state.report.painToday)}</p>` : ''}
+    ` : ''}
 
     <h3 style="font-size:var(--text-lg);margin:var(--space-8) 0 var(--space-3)">Decision brief</h3>
     <div class="review-grid">
@@ -1047,7 +1193,7 @@ function payload() {
   const h = HAZARDS.find((x) => x.id === state.hazard);
   const t = TEMPLATES.find((x) => x.id === state.template);
   return {
-    schema: 'adapt-stl-design-studio/v4',
+    schema: 'adapt-stl-design-studio/v5',
     event: CFG.eventName || '',
     boardCode: state.code,
     startedAt: state.startedAt,
@@ -1061,6 +1207,26 @@ function payload() {
     surfaceWidthPx: state.layoutMode === 'free' ? surfW() : '',
     role: state.role, organization: state.org,
     brief: state.brief,
+    report: (function () {
+      const r = state.report;
+      const on = r.wanted || reportImplied();
+      return {
+        wanted: on,
+        name: r.name, audience: r.audience, cadence: r.cadence,
+        formats: r.formats.slice(),
+        formatLabels: r.formats.map(function (id) {
+          const f = REPORT_FORMATS.find(function (x) { return x.id === id; });
+          return f ? f.label : id;
+        }),
+        length: r.length,
+        sections: r.sections.slice(),
+        sectionLabels: r.sections.map(function (id) {
+          const s = REPORT_SECTIONS.find(function (x) { return x.id === id; });
+          return s ? s.label : id;
+        }),
+        mustInclude: r.mustInclude, whoWrites: r.whoWrites, painToday: r.painToday,
+      };
+    })(),
     panels: orderedSlots().map((s, i) => {
       const w = WIDGET_BY_ID[s.widget.type];
       return {
@@ -1082,12 +1248,17 @@ function payload() {
 function toCSV(d) {
   const head = ['board_code', 'event', 'submitted_at', 'app_title', 'purpose', 'hazard', 'template', 'role', 'organization',
     'decision', 'action', 'audience', 'open_frequency', 'missing_data', 'barrier', 'contact',
+    'report_wanted', 'report_name', 'report_audience', 'report_cadence', 'report_formats',
+    'report_length', 'report_sections', 'report_must_include', 'report_who_writes', 'report_pain',
     'panel_order', 'panel_type', 'panel_type_name', 'panel_category', 'panel_hazard_tag', 'panel_title',
     'need_text', 'data_needed', 'geography', 'freshness', 'data_availability', 'priority',
     'layout_mode', 'row_index', 'col_index', 'width_cols', 'height_rows', 'pos_x', 'pos_y', 'width_px', 'height_px'];
   const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   const base = [d.boardCode, d.event, d.submittedAt, d.appTitle, d.purposeLabel, d.hazardLabel, d.templateLabel, d.role, d.organization,
-    d.brief.decision, d.brief.action, d.brief.who, d.brief.frequency, d.brief.missing, d.brief.barrier, d.brief.contact];
+    d.brief.decision, d.brief.action, d.brief.who, d.brief.frequency, d.brief.missing, d.brief.barrier, d.brief.contact,
+    d.report.wanted ? 'yes' : 'no', d.report.name, d.report.audience, d.report.cadence,
+    d.report.formatLabels.join('; '), d.report.length, d.report.sectionLabels.join('; '),
+    d.report.mustInclude, d.report.whoWrites, d.report.painToday];
   const rows = d.panels.length ? d.panels.map((p) => base.concat([p.order, p.type, p.typeName, p.category, p.hazardTag, p.title,
     p.need, p.dataNeeded, p.geography, p.freshness, p.dataAvailability, p.priority,
     d.layoutMode, p.rowIndex, p.colIndex, p.widthCols, p.heightRows, p.x, p.y, p.widthPx, p.heightPx])) : [base];

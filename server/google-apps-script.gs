@@ -28,6 +28,8 @@ var BOARD_HEADERS = [
   'app_title', 'purpose', 'hazard', 'template', 'layout_mode', 'panel_count',
   'role', 'organization',
   'decision', 'action', 'audience', 'open_frequency', 'missing_data', 'barrier', 'contact',
+  'report_wanted', 'report_name', 'report_audience', 'report_cadence', 'report_formats',
+  'report_length', 'report_sections', 'report_must_include', 'report_who_writes', 'report_pain',
   'user_agent'
 ];
 
@@ -35,6 +37,7 @@ var PANEL_HEADERS = [
   'received_at', 'board_code', 'event', 'submitted_at', 'app_title',
   'purpose', 'hazard', 'template', 'layout_mode', 'role', 'organization',
   'decision', 'action', 'audience', 'open_frequency', 'missing_data', 'barrier', 'contact',
+  'report_wanted', 'report_name',
   'panel_order', 'panel_type', 'panel_type_name', 'panel_category', 'panel_hazard_tag',
   'panel_title', 'need_text', 'data_needed', 'geography', 'freshness',
   'data_availability', 'priority',
@@ -50,6 +53,7 @@ function doPost(e) {
     var now = new Date();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var b = d.brief || {};
+    var r = d.report || {};
     var panels = d.panels || [];
 
     var boards = tab_(ss, 'boards', BOARD_HEADERS);
@@ -59,6 +63,9 @@ function doPost(e) {
       d.templateLabel || d.template, d.layoutMode, panels.length,
       d.role, d.organization,
       b.decision, b.action, b.who, b.frequency, b.missing, b.barrier, b.contact,
+      r.wanted ? 'yes' : 'no', r.name, r.audience, r.cadence,
+      (r.formatLabels || []).join('; '), r.length, (r.sectionLabels || []).join('; '),
+      r.mustInclude, r.whoWrites, r.painToday,
       d.userAgent
     ]);
 
@@ -67,7 +74,8 @@ function doPost(e) {
       now, d.boardCode, d.event, d.submittedAt, d.appTitle,
       d.purposeLabel || d.purpose, d.hazardLabel || d.hazard,
       d.templateLabel || d.template, d.layoutMode, d.role, d.organization,
-      b.decision, b.action, b.who, b.frequency, b.missing, b.barrier, b.contact
+      b.decision, b.action, b.who, b.frequency, b.missing, b.barrier, b.contact,
+      r.wanted ? 'yes' : 'no', r.name
     ];
     var rows = panels.map(function (p) {
       return base.concat([

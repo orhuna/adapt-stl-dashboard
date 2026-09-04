@@ -121,6 +121,27 @@
     }).join('') + '</div>';
   }
 
+  function reportHtml(b) {
+    var r = b.report;
+    if (!r || !r.wanted) return '';
+    var rows = [
+      ['Document', r.name], ['Who reads it', r.audience], ['Produced', r.cadence],
+      ['Format', (r.formatLabels || []).join(', ')], ['Length', r.length],
+      ['Must include', r.mustInclude], ['Assembled today by', r.whoWrites],
+      ['Painful today', r.painToday]
+    ].filter(function (x) { return (x[1] || '').trim(); });
+    return '<div class="gb-report"><h4>Report or briefing they want</h4>' +
+      ((r.sectionLabels || []).length
+        ? '<div class="rep-tags">' + r.sectionLabels.map(function (s) {
+            return '<span class="chip">' + esc(s) + '</span>';
+          }).join('') + '</div>'
+        : '<p class="gb-none">No sections ticked.</p>') +
+      (rows.length ? '<dl>' + rows.map(function (x) {
+        return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>';
+      }).join('') + '</dl>' : '') +
+      '</div>';
+  }
+
   function boardHtml(b, i) {
     var when = b.submittedAt ? new Date(b.submittedAt).toLocaleString() : '';
     var chips = [
@@ -128,6 +149,7 @@
       b.purposeLabel || b.purpose,
       b.templateLabel || b.template,
       b.layoutMode === 'free' ? 'free layout' : 'rows & columns',
+      (b.report && b.report.wanted) ? 'wants a report' : '',
       (b.panels || []).length + ' panel' + ((b.panels || []).length === 1 ? '' : 's')
     ].filter(Boolean);
     return '<section class="gb" data-i="' + i + '">' +
@@ -139,6 +161,7 @@
         '<div class="gb-chips">' + chips.map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join('') + '</div>' +
       '</header>' +
       '<div class="gb-canvas">' + canvasHtml(b) + '</div>' +
+      reportHtml(b) +
       briefHtml(b) +
     '</section>';
   }
@@ -148,7 +171,10 @@
   function visible() {
     var hz = $('#g-f-hazard').value, pu = $('#g-f-purpose').value, sort = $('#g-sort').value;
     var out = boards.filter(function (b) {
-      return (!hz || (b.hazardLabel || b.hazard) === hz) && (!pu || (b.purposeLabel || b.purpose) === pu);
+      var rep = $('#g-f-report').value;
+      return (!hz || (b.hazardLabel || b.hazard) === hz)
+        && (!pu || (b.purposeLabel || b.purpose) === pu)
+        && (!rep || (rep === 'yes') === !!(b.report && b.report.wanted));
     });
     out.sort(function (a, b) {
       if (sort === 'panels') return (b.panels || []).length - (a.panels || []).length;
@@ -294,7 +320,7 @@
     status('');
   });
 
-  ['#g-f-hazard', '#g-f-purpose', '#g-sort'].forEach(function (s) {
+  ['#g-f-hazard', '#g-f-purpose', '#g-f-report', '#g-sort'].forEach(function (s) {
     $(s).addEventListener('change', render);
   });
 
@@ -302,7 +328,9 @@
 
   var COLS = ['board_code', 'event', 'submitted_at', 'app_title', 'purpose', 'hazard', 'template',
     'role', 'organization', 'decision', 'action', 'audience', 'open_frequency', 'missing_data',
-    'barrier', 'contact', 'panel_order', 'panel_type', 'panel_type_name', 'panel_category',
+    'barrier', 'contact', 'report_wanted', 'report_name', 'report_audience', 'report_cadence',
+    'report_formats', 'report_length', 'report_sections', 'report_must_include',
+    'report_who_writes', 'report_pain', 'panel_order', 'panel_type', 'panel_type_name', 'panel_category',
     'panel_hazard_tag', 'panel_title', 'need_text', 'data_needed', 'geography', 'freshness',
     'data_availability', 'priority', 'layout_mode', 'row_index', 'col_index', 'width_cols',
     'height_rows', 'pos_x', 'pos_y', 'width_px', 'height_px'];
@@ -313,10 +341,14 @@
     var lines = [COLS.join(',')];
     visible().forEach(function (b) {
       var br = b.brief || {};
+      var rp = b.report || {};
       (b.panels || []).forEach(function (p) {
         lines.push([b.boardCode, b.event, b.submittedAt, b.appTitle, b.purposeLabel || b.purpose,
           b.hazardLabel || b.hazard, b.templateLabel || b.template, b.role, b.organization,
           br.decision, br.action, br.who, br.frequency, br.missing, br.barrier, br.contact,
+          rp.wanted ? 'yes' : 'no', rp.name, rp.audience, rp.cadence,
+          (rp.formatLabels || []).join('; '), rp.length, (rp.sectionLabels || []).join('; '),
+          rp.mustInclude, rp.whoWrites, rp.painToday,
           p.order, p.type, p.typeName, p.category, p.hazardTag, p.title, p.need, p.dataNeeded,
           p.geography, p.freshness, p.dataAvailability, p.priority, b.layoutMode,
           p.rowIndex, p.colIndex, p.widthCols, p.heightRows, p.x, p.y, p.widthPx, p.heightPx
