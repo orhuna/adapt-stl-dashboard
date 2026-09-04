@@ -175,18 +175,39 @@ Unlimited bandwidth on the free plan and it accepts a direct upload with no Git 
 
 ## C. The QR code
 
-Once you have the final URL from step B:
+`tools/make_qr.py` builds it, decodes the file it just wrote to prove it works, and emits both a print-ready PNG and a vector SVG.
 
-- Easiest: any free generator, e.g. [qr-code-generator.com](https://www.qr-code-generator.com/) or [qrcode-monkey.com](https://www.qrcode-monkey.com/). Choose **URL**, paste, download as **PNG at 1000 px or larger**, or SVG if you are printing large.
-- Or generate it yourself: `pip install qrcode[pil]` then
-  `python -m qrcode "https://adapt-stl-studio.netlify.app" --output=qr.png --error-correction=H`
+```bash
+pip install "qrcode[pil]" opencv-python-headless
+
+python tools/make_qr.py
+# wrote adapt-stl-qr.png  (1200x1476, version 4, ~25% error correction)
+# wrote adapt-stl-qr.svg
+# verified: decodes to https://orhuna.github.io/adapt-stl-dashboard/
+```
+
+Defaults: the live Pages URL, the studio's teal `#0a6a72`, rounded modules, a bold title above and the literal URL below in readable type. Useful flags:
+
+| Flag | Effect |
+| --- | --- |
+| `--url` | point it somewhere else (e.g. `.../gallery.html` for a facilitator-only card) |
+| `--out NAME` | basename for the two files |
+| `--px 2400` | bigger PNG for a poster |
+| `--plain` | code only, no title or caption — for dropping into a slide |
+| `--square` | hard square modules instead of rounded |
+| `--color "#12232b"` | different ink |
+| `--title` / `--caption` | change the type |
+
+Two implementation details worth keeping if you rewrite this: the resize uses `Image.NEAREST`, because smoothly resampling a QR code blurs the module edges and cameras start failing at an angle; and the `border=4` quiet zone is the spec minimum — cropping it tight to look neater is the most common way a printed code stops scanning.
+
+The script uses error-correction level **Q** (~25% recoverable), which is the sweet spot: level H recovers 30% but forces a denser grid, and at A5 the extra density costs you more scan reliability than the redundancy buys back. If you plan to drop a logo in the middle, switch to H.
 
 Printing rules that actually matter at an event:
 
-- Print at **A5 or larger**, one per table. A code smaller than about 4 cm fails from across a table.
-- Use **high error correction (H)** so a coffee ring or a crease doesn't kill it.
-- Print the plain URL underneath in readable type. Some phones will refuse the code and someone will want to type it.
-- **Test the printed code**, on the venue Wi-Fi, with both an iPhone and an Android phone, before the session.
+- Print at **A5 or larger**, one per table. A code under about 4 cm fails from across a table.
+- Print the plain URL underneath in readable type — the script does this by default. Some phones refuse codes and someone will want to type it.
+- Matte paper, not gloss. Overhead lighting reflecting off a glossy table tent defeats more scans than anything else.
+- **Test the printed code on the venue Wi-Fi**, with both an iPhone and an Android phone, before the session.
 
 ---
 
