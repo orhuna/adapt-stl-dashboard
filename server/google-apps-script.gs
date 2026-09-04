@@ -31,6 +31,7 @@ var PANEL_HEADERS = [
   'panel_order', 'panel_type', 'panel_type_name', 'panel_category', 'panel_hazard_tag',
   'panel_title', 'need_text', 'data_needed', 'geography', 'freshness',
   'data_availability', 'priority',
+  'row_index', 'col_index',
   'width_cols', 'height_rows', 'pos_x', 'pos_y', 'width_px', 'height_px', 'surface_width_px'
 ];
 
@@ -66,6 +67,7 @@ function doPost(e) {
         p.order, p.type, p.typeName, p.category, p.hazardTag,
         p.title, p.need, p.dataNeeded, p.geography, p.freshness,
         p.dataAvailability, p.priority,
+        p.rowIndex, p.colIndex,
         p.widthCols, p.heightRows, p.x, p.y, p.widthPx, p.heightPx, d.surfaceWidthPx
       ]);
     });

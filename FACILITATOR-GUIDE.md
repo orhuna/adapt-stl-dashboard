@@ -10,7 +10,7 @@ A browser-based participatory design tool for the final 45 minutes of the Saint 
 | --- | --- | --- |
 | 0 | Welcome | — |
 | 1 | Purpose + hazard | Purpose (7 options), hazard focus (heat / flood / both), role, organization |
-| 2 | Layout | Which of 7 layout options they started from, and whether they ended in tidy-grid or free layout |
+| 2 | Layout | Which of 7 layout options they started from, and whether they ended in rows & columns or free layout |
 | 3 | Build canvas | Panel type, title, position, size for every panel; free-text need (written in the box under each panel), plus data required, geography, freshness, data availability and priority |
 | 4 | Review & submit | Decision brief: decision supported, action that follows, missing data, barrier |
 | 5 | Done | Board code (`STL-XXXX`) read aloud or written on a card |
@@ -23,10 +23,15 @@ Every preset shows a realistic preview, not an empty box: the map panels use rea
 
 **Every panel carries its own note box.** Under each panel on the canvas there is a text area labelled *"What do you need this panel to show you?"* (or *"Your note"* on a text panel). It stays amber until something is written in it, and it is the same field as the one in the right-hand properties panel — typing in either updates both. This is the single most important field in the instrument.
 
-**Two layout modes.** The toolbar above the canvas has a **Tidy grid / Free layout** switch, and no work is lost when someone flips between them.
+**Two layout modes.** The toolbar above the canvas has a **Rows & columns / Free layout** switch, and no work is lost when someone flips between them — the row structure and relative widths survive a round trip in both directions.
 
-- *Tidy grid* — panels snap into a six-column grid, nothing overlaps. Best on phones and for people who want to move fast.
-- *Free layout* — a completely open canvas. Drag a panel's title bar to move it anywhere, drag its bottom-right corner to resize it, overlap panels freely. Choosing the **"Build my own — free layout"** template starts here on an empty canvas. This mode needs a screen wider than 880 px; on a phone the panels stack into a readable single column and the drag positioning is disabled.
+- *Rows & columns* — the default. Panels sharing a row sit **side by side**; every new row **stacks** below the last. Any mix of the two is allowed, up to four panels in one row. Three ways to rearrange:
+  - **Drag** a panel's title bar. Dropping it on the left or right half of another panel inserts it beside that panel (a teal bar shows where it will land). Dropping it into the highlighted gap between rows gives it a new row of its own.
+  - **Arrows** in each panel's header: `←` `→` move it along its row and hop it into the row above/below; `↑` `↓` pull it out into its own stacked row, or swap whole rows when it is already alone.
+  - **"Where it sits"** in the right-hand properties panel: *Give it its own row* / *Put it beside its neighbour*, plus a *Share of the row* control (Narrow / Half / Wide / Full) that sets how much of the row width it takes.
+- *Free layout* — a completely open canvas. Drag a panel's title bar to move it anywhere, drag its bottom-right corner to resize it, overlap panels freely. Choosing the **"Build my own — free layout"** template starts here on an empty canvas. This mode needs a screen wider than 880 px.
+
+**On a phone** everything flattens into one readable column. The `←` `→` arrows hide (side-by-side has no meaning in a single column) leaving `↑` `↓` to reorder, and free-layout dragging is disabled. Side-by-side arrangements still record correctly if someone built them on a laptop — but hand out a tablet or laptop to anyone who wants to lay out a real dashboard.
 
 A search box above the panel list filters all ~30 presets by name, so nobody has to scroll to find "hydrograph".
 
@@ -88,9 +93,9 @@ Print the QR code at A5 or larger and put one on every table. Test one scan on t
 
 ## Export schema
 
-Schema id: `adapt-stl-design-studio/v3`.
+Schema id: `adapt-stl-design-studio/v4`.
 
-The JSON keeps the full board (design metadata + ordered panel array + decision brief). The CSV is one row per panel with 35 columns, ready to load straight into R or pandas:
+The JSON keeps the full board (design metadata + ordered panel array + decision brief). The CSV is one row per panel with 37 columns, ready to load straight into R or pandas:
 
 ```
 board_code, event, submitted_at, app_title, purpose, hazard, template,
@@ -98,10 +103,12 @@ role, organization, decision, action, audience, open_frequency,
 missing_data, barrier, contact, panel_order, panel_type, panel_type_name,
 panel_category, panel_hazard_tag, panel_title, need_text, data_needed,
 geography, freshness, data_availability, priority, layout_mode,
-width_cols, height_rows, pos_x, pos_y, width_px, height_px
+row_index, col_index, width_cols, height_rows, pos_x, pos_y, width_px, height_px
 ```
 
-In free layout, `pos_x` / `pos_y` / `width_px` / `height_px` record where the participant actually put each window (with `surface_width_px` in the JSON as the reference frame), and panels are ordered top-to-bottom then left-to-right. In tidy-grid mode those columns are blank and `width_cols` / `height_rows` carry the geometry instead.
+In rows & columns mode, `row_index` (1-based, top to bottom) and `col_index` (1-based, left to right within that row) give you the exact arrangement: two panels sharing a `row_index` were placed **side by side**, and consecutive `row_index` values were **stacked**. `width_cols` is that panel's share of its row out of six. The pixel columns are blank in this mode.
+
+In free layout, `pos_x` / `pos_y` / `width_px` / `height_px` record where the participant actually put each window (with `surface_width_px` in the JSON as the reference frame), and panels are ordered top-to-bottom then left-to-right. `row_index` / `col_index` are blank there.
 
 Concatenating every guest's CSV gives a single tidy panel-level table; `board_code` is the grouping key for board-level analysis.
 
@@ -118,7 +125,7 @@ Suggested analysis frame:
 3. **Spatial support** — distribution of `geography`. Expect a gap between the unit practitioners ask for (parcel, block, street segment) and the unit most published hazard data is served at (tract, county).
 4. **Data gap** — `data_availability` = "not sure" / "does not exist" is the direct measure of perceived data gaps; `missing_data` gives the qualitative content.
 5. **Decision linkage** — code `need_text` → `decision` → `action` triples to test whether requested map functions actually connect to a stated action, or stop at situational awareness.
-6. **Layout as evidence** — compare `layout_mode`, and `pos_x`/`width_px` within free-layout boards. Whether a participant accepted a template, rearranged it, or started from the empty free canvas is a signal about how well existing dashboard conventions fit their mental model; the panel they made biggest and put top-left is usually the one they actually care about.
+6. **Layout as evidence** — compare `layout_mode`, `row_index`/`col_index` groupings, and `pos_x`/`width_px` within free-layout boards. Which panels people insisted on seeing side by side is a direct read on which pieces of information they compare in the same glance. Whether a participant accepted a template, rearranged it, or started from the empty free canvas is a signal about how well existing dashboard conventions fit their mental model; the panel they made biggest and put top-left is usually the one they actually care about.
 7. **Adoption barriers** — thematic coding of `barrier`, cross-tabulated with `role` and `organization` type.
 
 Report `panel_hazard_tag` splits (heat / flood / neither) to show whether the two hazards generate different information needs or converge on a common core.

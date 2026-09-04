@@ -679,7 +679,7 @@ body.is-dragging-panel .row-drop span { opacity: 1; }
   .mobile-only { display: inline-flex; }
   .builder { flex-direction: column; }
   .crow { flex-direction: column; min-height: 0 !important; }
-  .slot { min-height: 200px; }
+  .slot { min-height: 290px; }
   .slot.drop-before::before, .slot.drop-after::after { display: none; }
   /* side-by-side is invisible in a stacked phone view, so only offer up/down */
   .widget-tool[data-act="left"], .widget-tool[data-act="right"] { display: none; }

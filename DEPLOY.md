@@ -153,7 +153,7 @@ Printing rules that actually matter at an event:
 - [ ] The hosted URL opens on a phone, a tablet and a laptop.
 - [ ] The Google Sheet is open on the facilitator laptop so you can watch boards arrive.
 - [ ] QR codes printed, tested on venue Wi-Fi, URL printed underneath.
-- [ ] A few tablets or laptops on hand — the free-layout drag-and-drop needs a screen wider than 880 px; phones fall back to a stacked single column.
+- [ ] A few tablets or laptops on hand — side-by-side arrangement and free-layout dragging need a screen wider than 880 px; phones fall back to a stacked single column with up/down reordering.
 - [ ] Fallback ready: if the venue network fails, set `collectUrl: ''` (offline mode) and each guest's device downloads its own JSON + CSV for you to collect.
 
 ---
