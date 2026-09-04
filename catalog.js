@@ -372,8 +372,8 @@ const TEMPLATES = [
     ],
   },
   {
-    id: 'blank', name: 'Blank canvas (tidy grid)',
-    desc: 'Start empty and build the layout yourself. Panels snap into a neat grid so nothing overlaps.',
+    id: 'blank', name: 'Blank canvas (rows & columns)',
+    desc: 'Start empty and build it yourself. Stack panels in rows, sit them side by side, or mix the two \u2014 nothing overlaps.',
     thumb: [[3, 1], [3, 1]],
     slots: [
       { w: 3, h: 2, hint: 'anything' },
@@ -388,6 +388,9 @@ const TEMPLATES = [
     slots: [],
   },
 ];
+
+/* Rows & columns layout: how many panels may share one row, and the column unit. */
+const ROWS = { maxPerRow: 4, cols: 6 };
 
 /* Free-layout design surface, in CSS pixels. Panels store x/y/w/h in this space. */
 const FREE = { width: 1180, minHeight: 760, grid: 20, minW: 220, minH: 190, pad: 16 };

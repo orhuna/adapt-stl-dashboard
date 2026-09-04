@@ -171,13 +171,21 @@ function applyTemplate() {
       picks.forEach((id) => {
         const w = WIDGET_BY_ID[id];
         if (!w) return;
-        state.slots.push({ id: nextId(), x: null, y: null, fw: null, fh: null, w: w.w, h: w.h, widget: makeWidget(id) });
+        state.slots.push({ id: nextId(), row: 0, x: null, y: null, fw: null, fh: null, w: w.w, h: w.h, widget: makeWidget(id) });
       });
       state.selected = state.slots.length ? state.slots[0].id : null;
     }
     return;
   }
-  state.slots = t.slots.map((s) => ({ id: nextId(), w: s.w, h: s.h, hint: s.hint, widget: null }));
+  let row = 0, used = 0;
+  state.slots = t.slots.map((s) => {
+    const cols = Math.min(ROWS.cols, s.w || 3);
+    if (used > 0 && (used + cols > ROWS.cols)) { row += 1; used = 0; }
+    used += cols;
+    const slot = { id: nextId(), row, w: s.w, h: s.h, hint: s.hint, widget: null };
+    if (used >= ROWS.cols) { row += 1; used = 0; }
+    return slot;
+  });
   if ($('#in-prefill').checked) {
     const fallback = [...(SUGGESTIONS[state.purpose] || []), ...(HAZARD_SUGGEST[state.hazard] || [])];
     let fi = 0;
@@ -257,18 +265,23 @@ function noteMarkup(slot) {
   </div>`;
 }
 
-function widgetMarkup(slot, free) {
+function widgetMarkup(slot, free, ctx) {
   const w = WIDGET_BY_ID[slot.widget.type];
   const isSel = state.selected === slot.id;
   const style = free
     ? `left:${slot.x}px;top:${slot.y}px;width:${slot.fw}px;height:${slot.fh}px;z-index:${slot.z || 1}`
     : '';
+  const arrow = (act, glyph, label, ok) => `<button class="widget-tool" data-act="${act}" data-id="${slot.id}"
+      title="${label}" aria-label="${label}" ${ok ? '' : 'disabled'}>${glyph}</button>`;
+  const c = ctx || {};
   const tools = free
     ? `<button class="widget-tool" data-act="front" data-id="${slot.id}" title="Bring to front" aria-label="Bring to front">\u2b1a</button>
        <button class="widget-tool" data-act="del" data-id="${slot.id}" title="Remove" aria-label="Remove">\u2715</button>`
-    : `<button class="widget-tool" data-act="up" data-id="${slot.id}" title="Move up" aria-label="Move up">\u2191</button>
-       <button class="widget-tool" data-act="down" data-id="${slot.id}" title="Move down" aria-label="Move down">\u2193</button>
-       <button class="widget-tool" data-act="del" data-id="${slot.id}" title="Remove" aria-label="Remove">\u2715</button>`;
+    : arrow('left', '\u2190', 'Move left / into the row above', c.canLeft)
+      + arrow('right', '\u2192', 'Move right / into the row below', c.canRight)
+      + arrow('up', '\u2191', c.alone ? 'Swap with the row above' : 'Give it its own row above', c.canUp)
+      + arrow('down', '\u2193', c.alone ? 'Swap with the row below' : 'Give it its own row below', c.canDown)
+      + `<button class="widget-tool" data-act="del" data-id="${slot.id}" title="Remove" aria-label="Remove">\u2715</button>`;
   return `<article class="widget ${free ? 'is-free' : ''} ${isSel ? 'is-selected' : ''} ${w.isNote ? 'is-note' : ''}"
            data-widget="${slot.id}" style="${style}" tabindex="0">
       <header class="widget-head" ${free ? `data-drag="${slot.id}"` : 'draggable="true"'}>
@@ -291,27 +304,185 @@ function renderCanvas() {
   const hint = $('#canvas-hint');
   if (hint) hint.textContent = free
     ? 'Tip: write in the box under each panel \u2014 those notes are what the Forum writes up. The layout alone isn\u2019t enough.'
-    : 'Tip: click a panel to set its details, and write what it must show in the box underneath. Notes are what the Forum writes up.';
+    : isNarrow()
+      ? 'Tip: on a phone every panel stacks in one column. Use \u2191 \u2193 to reorder \u2014 side-by-side arrangements are easier to build on a laptop.'
+      : 'Tip: panels in the same row sit side by side; every new row stacks below. Drag a title bar to rearrange, or use \u2190 \u2192 \u2191 \u2193.';
   const fh = document.querySelector('.free-hint');
   if (fh) fh.textContent = isNarrow()
     ? 'On a phone the panels stack in one column. Open this on a laptop or tablet to drag them into any arrangement you like.'
     : 'Free layout: drag a panel\u2019s title bar to move it anywhere, drag its bottom-right corner to resize, and overlap them however you like. Nothing snaps into rows.';
-  if (free) renderFreeCanvas(); else renderGridCanvas();
+  if (free) renderFreeCanvas(); else renderRowsCanvas();
   const n = state.slots.filter((s) => s.widget).length;
   $('#chip-count').textContent = n === 1 ? '1 panel' : n + ' panels';
 }
 
-function renderGridCanvas() {
-  $('#canvas').innerHTML = state.slots.map((slot) => {
-    const style = `grid-column: span ${slot.w}; grid-row: span ${slot.h};`;
-    if (!slot.widget) {
-      return `<div class="slot" data-slot="${slot.id}" style="${style}">
-        <button class="slot-empty" type="button" data-empty="${slot.id}">
-          <span class="plus">\uff0b</span><b>Add a panel</b><span>suggested: ${esc(slot.hint || 'anything')}</span>
-        </button></div>`;
-    }
-    return `<div class="slot" data-slot="${slot.id}" style="${style}">${widgetMarkup(slot, false)}</div>`;
-  }).join('');
+/* ---------- rows & columns layout ----------
+   Panels sharing a `row` sit side by side; each row stacks below the last.
+   Within a row, order follows the order of state.slots, and `w` acts as a
+   relative share of the row width, so any mix of stacked and side-by-side
+   arrangements is expressible. */
+
+function rowsOf() {
+  const map = new Map();
+  state.slots.forEach((s) => {
+    const r = Number.isFinite(s.row) ? s.row : 0;
+    if (!map.has(r)) map.set(r, []);
+    map.get(r).push(s);
+  });
+  return [...map.keys()].sort((x, y) => x - y).map((k) => map.get(k));
+}
+
+/* renumber rows 0..n-1 and keep state.slots in visual order */
+function normalizeRows() {
+  const rows = rowsOf();
+  rows.forEach((row, i) => row.forEach((s) => { s.row = i; }));
+  state.slots = rows.reduce((acc, row) => acc.concat(row), []);
+  return rows;
+}
+
+function rowHeightPx(row) {
+  const h = row.reduce((m, s) => Math.max(m, s.h || 2), 1);
+  return h * 172 + (h - 1) * 12;
+}
+
+function renderRowsCanvas() {
+  const rows = normalizeRows();
+  const strip = (i, label) => `<div class="row-drop" data-rowdrop="${i}" aria-hidden="true"><span>${label}</span></div>`;
+  if (!rows.length) {
+    $('#canvas').innerHTML = `<div class="rows-empty"><b>Nothing here yet</b>
+      <span>Tap a panel in the list on the left, or drag one in. Panels you drop into the same row
+      sit side by side; drop into a gap between rows to stack them.</span></div>` + strip(0, 'Drop a panel here');
+    return;
+  }
+  let html = '';
+  rows.forEach((row, i) => {
+    html += strip(i, i === 0 ? 'Drop here \u2014 new row at the top' : 'Drop here \u2014 new row in between');
+    html += `<div class="crow" data-row="${i}" style="min-height:${rowHeightPx(row)}px">`
+      + row.map((slot, j) => {
+        const ctx = {
+          alone: row.length === 1,
+          canLeft: j > 0 || i > 0,
+          canRight: j < row.length - 1 || i < rows.length - 1,
+          canUp: i > 0 || row.length > 1,
+          canDown: i < rows.length - 1 || row.length > 1,
+        };
+        const style = `flex: ${slot.w || 3} 1 0;`;
+        if (!slot.widget) {
+          return `<div class="slot" data-slot="${slot.id}" data-row="${i}" data-col="${j}" style="${style}">
+            <button class="slot-empty" type="button" data-empty="${slot.id}">
+              <span class="plus">\uff0b</span><b>Add a panel</b><span>suggested: ${esc(slot.hint || 'anything')}</span>
+            </button></div>`;
+        }
+        return `<div class="slot" data-slot="${slot.id}" data-row="${i}" data-col="${j}" style="${style}">${widgetMarkup(slot, false, ctx)}</div>`;
+      }).join('')
+      + `</div>`;
+  });
+  html += strip(rows.length, 'Drop here \u2014 new row at the bottom');
+  $('#canvas').innerHTML = html;
+}
+
+/* ---------- row mutations ---------- */
+
+/* put `s` at position `pos` inside row `rowIdx`, keeping state.slots ordered */
+function placeInRow(s, rowIdx, pos) {
+  const cur = state.slots.indexOf(s);
+  if (cur >= 0) state.slots.splice(cur, 1);
+  s.row = rowIdx;
+  const members = state.slots.filter((x) => x.row === rowIdx);
+  let target;
+  if (!members.length) {
+    const after = state.slots.findIndex((x) => x.row > rowIdx);
+    target = after < 0 ? state.slots.length : after;
+  } else if (pos >= members.length) {
+    target = state.slots.indexOf(members[members.length - 1]) + 1;
+  } else {
+    target = state.slots.indexOf(members[pos]);
+  }
+  state.slots.splice(target, 0, s);
+  normalizeRows();
+}
+
+/* give `s` a brand-new row inserted at rowIdx */
+function moveToNewRow(s, rowIdx) {
+  state.slots.forEach((x) => { if (x !== s && (Number.isFinite(x.row) ? x.row : 0) >= rowIdx) x.row += 1; });
+  const cur = state.slots.indexOf(s);
+  if (cur >= 0) state.slots.splice(cur, 1);
+  s.row = rowIdx;
+  const after = state.slots.findIndex((x) => x.row > rowIdx);
+  state.slots.splice(after < 0 ? state.slots.length : after, 0, s);
+  normalizeRows();
+}
+
+function moveHoriz(slotId, dir) {
+  const rows = normalizeRows();
+  const s = state.slots.find((x) => x.id === slotId);
+  if (!s) return;
+  const i = s.row, row = rows[i], j = row.indexOf(s), nj = j + dir;
+  if (nj >= 0 && nj < row.length) {
+    const other = row[nj];
+    const a = state.slots.indexOf(s), b = state.slots.indexOf(other);
+    const t = state.slots[a]; state.slots[a] = state.slots[b]; state.slots[b] = t;
+    normalizeRows();
+  } else {
+    const ni = i + dir;
+    if (ni < 0 || ni >= rows.length) return;
+    if (rows[ni].length >= ROWS.maxPerRow) { toast('That row is full \u2014 four panels side by side is the limit'); return; }
+    placeInRow(s, ni, dir < 0 ? rows[ni].length : 0);
+  }
+  afterRowChange(slotId);
+}
+
+function moveVert(slotId, dir) {
+  const rows = normalizeRows();
+  const s = state.slots.find((x) => x.id === slotId);
+  if (!s) return;
+  const i = s.row, row = rows[i], j = row.indexOf(s);
+  if (row.length > 1) {
+    moveToNewRow(s, dir < 0 ? i : i + 1);
+  } else {
+    const ni = i + dir;
+    if (ni < 0 || ni >= rows.length) return;
+    rows[ni].forEach((x) => { x.row = i; });
+    s.row = ni;
+    normalizeRows();
+  }
+  afterRowChange(slotId);
+}
+
+/* pull a panel out so it owns its row, full width */
+function makeOwnRow(slotId) {
+  const rows = normalizeRows();
+  const s = state.slots.find((x) => x.id === slotId);
+  if (!s) return;
+  const row = rows[s.row];
+  if (row.length > 1) moveToNewRow(s, row.indexOf(s) === 0 ? s.row : s.row + 1);
+  s.w = 6;
+  afterRowChange(slotId);
+  toast('Now stacked on its own row');
+}
+
+/* sit a panel beside its neighbour, sharing a row */
+function joinNeighbourRow(slotId) {
+  const rows = normalizeRows();
+  const s = state.slots.find((x) => x.id === slotId);
+  if (!s) return;
+  const i = s.row;
+  const ni = i > 0 ? i - 1 : (rows.length > 1 ? 1 : -1);
+  if (ni < 0) { toast('Add another panel first, then they can share a row'); return; }
+  if (rows[ni].length >= ROWS.maxPerRow) { toast('That row already holds four panels'); return; }
+  const share = Math.max(2, Math.min(4, Math.round(6 / (rows[ni].length + 1))));
+  rows[ni].forEach((x) => { x.w = share; });
+  s.w = share;
+  placeInRow(s, ni, i > 0 ? rows[ni].length : 0);
+  afterRowChange(slotId);
+  toast('Now side by side');
+}
+
+function afterRowChange(slotId) {
+  renderCanvas();
+  renderPanel();
+  const el = document.querySelector(`[data-slot="${slotId}"]`);
+  if (el) el.scrollIntoView({ block: 'nearest' });
 }
 
 function renderFreeCanvas() {
@@ -390,29 +561,41 @@ function clampFree(slot) {
 
 function convertToFree() {
   const W = surfW();
-  const colW = (W - FREE.pad * 2) / 6;
-  let x = FREE.pad, y = FREE.pad, rowH = 0;
-  state.slots.filter((s) => s.widget).forEach((s) => {
-    const fw = Math.max(FREE.minW, Math.min(W - FREE.pad * 2, snapTo(Math.min(6, s.w || 3) * colW - 14)));
-    const fh = Math.max(FREE.minH, snapTo(120 + (s.h || 2) * 100));
-    if (x + fw > W - FREE.pad) { x = FREE.pad; y += rowH + FREE.grid; rowH = 0; }
-    s.x = x; s.y = y; s.fw = fw; s.fh = fh; s.z = ++zTop;
-    x += fw + FREE.grid;
-    rowH = Math.max(rowH, fh);
-  });
+  const avail = W - FREE.pad * 2;
   state.slots = state.slots.filter((s) => s.widget);
+  const rows = normalizeRows();
+  let y = FREE.pad;
+  rows.forEach((row) => {
+    const total = row.reduce((m, s) => m + Math.min(ROWS.cols, s.w || 3), 0) || 1;
+    const gaps = FREE.grid * (row.length - 1);
+    let x = FREE.pad, rowH = 0;
+    row.forEach((s) => {
+      const share = Math.min(ROWS.cols, s.w || 3) / total;
+      const fw = Math.max(FREE.minW, snapTo((avail - gaps) * share));
+      const fh = Math.max(FREE.minH, snapTo(120 + (s.h || 2) * 100));
+      s.x = snapTo(x); s.y = snapTo(y); s.fw = fw; s.fh = fh; s.z = ++zTop;
+      x += fw + FREE.grid;
+      rowH = Math.max(rowH, fh);
+    });
+    y += rowH + FREE.grid;
+  });
 }
 
 function convertToGrid() {
-  const colW = (surfW() - FREE.pad * 2) / 6;
-  state.slots = state.slots.filter((s) => s.widget)
-    .sort((a, b) => ((a.y || 0) - (b.y || 0)) || ((a.x || 0) - (b.x || 0)))
-    .map((s) => {
-      s.w = Math.max(1, Math.min(6, Math.round((s.fw || 380) / colW)));
-      s.h = Math.max(1, Math.min(3, Math.round(((s.fh || 320) - 120) / 100)));
-      s.hint = s.hint || 'anything';
-      return s;
-    });
+  const colW = (surfW() - FREE.pad * 2) / ROWS.cols;
+  const sorted = state.slots.filter((s) => s.widget)
+    .sort((a, b) => ((a.y || 0) - (b.y || 0)) || ((a.x || 0) - (b.x || 0)));
+  let row = -1, band = -1e9, inRow = 0;
+  sorted.forEach((s) => {
+    if ((s.y || 0) - band > 80 || inRow >= ROWS.maxPerRow) { row += 1; band = s.y || 0; inRow = 0; }
+    inRow += 1;
+    s.row = Math.max(0, row);
+    s.w = Math.max(1, Math.min(ROWS.cols, Math.round((s.fw || 380) / colW)));
+    s.h = Math.max(1, Math.min(3, Math.round(((s.fh || 320) - 120) / 100)));
+    s.hint = s.hint || 'anything';
+  });
+  state.slots = sorted;
+  normalizeRows();
 }
 
 function setLayoutMode(mode) {
@@ -424,7 +607,7 @@ function setLayoutMode(mode) {
   renderPanel();
   toast(mode === 'free'
     ? 'Free layout on \u2014 drag panels anywhere, resize from the corner'
-    : 'Back to the tidy grid \u2014 panels snap into rows');
+    : 'Rows & columns on \u2014 same row means side by side, a new row stacks below');
 }
 
 function syncLayoutMode() {
@@ -566,7 +749,14 @@ function renderPanel() {
       ? `<p class="field-hint" style="margin-bottom:var(--space-2)">Drag the title bar to move this window and the bottom-right corner to resize it. These presets are a shortcut.</p>
          ${seg('p-fw', '', [{ id: '380', label: 'Narrow' }, { id: '560', label: 'Half' }, { id: '760', label: 'Wide' }, { id: '1148', label: 'Full' }], 'Width')}
          ${seg('p-fh', '', [{ id: '220', label: 'Short' }, { id: '340', label: 'Tall' }, { id: '520', label: 'Extra tall' }], 'Height')}`
-      : `${seg('p-w', String(slot.w), [{ id: '2', label: 'Narrow' }, { id: '3', label: 'Half' }, { id: '4', label: 'Wide' }, { id: '6', label: 'Full' }], 'Width')}
+      : `<p class="field-label">Where it sits</p>
+         <p class="field-hint">Panels on the same row sit side by side. A row of its own means it is stacked full width.</p>
+         <div class="arrange-btns">
+           <button class="btn btn-sm" type="button" id="p-own">Give it its own row</button>
+           <button class="btn btn-sm" type="button" id="p-beside">Put it beside its neighbour</button>
+         </div>
+         <p class="field-hint" style="margin-top:var(--space-2)">Row ${(slot.row || 0) + 1} of ${normalizeRows().length}</p>
+         ${seg('p-w', String(slot.w), [{ id: '2', label: 'Narrow' }, { id: '3', label: 'Half' }, { id: '4', label: 'Wide' }, { id: '6', label: 'Full' }], 'Share of the row')}
          ${seg('p-h', String(slot.h), [{ id: '1', label: 'Short' }, { id: '2', label: 'Tall' }, { id: '3', label: 'Extra tall' }], 'Height')}`}
     <div class="form-row"><button class="btn btn-sm" id="p-remove" type="button">Remove this panel</button></div>`;
   bindPanel(slot);
@@ -620,6 +810,11 @@ function bindPanel(slot) {
   bindSeg('#p-fw', (v) => { slot.fw = +v; clampFree(slot); renderCanvas(); });
   bindSeg('#p-fh', (v) => { slot.fh = +v; clampFree(slot); renderCanvas(); });
 
+  const own = $('#p-own');
+  if (own) own.addEventListener('click', () => makeOwnRow(slot.id));
+  const beside = $('#p-beside');
+  if (beside) beside.addEventListener('click', () => joinNeighbourRow(slot.id));
+
   const rm = $('#p-remove');
   if (rm) rm.addEventListener('click', () => removeWidget(slot.id));
 }
@@ -666,7 +861,7 @@ function bindSeg(sel_, cb) {
 
 /* ---------------- canvas mutation ---------------- */
 
-function placeWidget(typeId, slotId, pos) {
+function placeWidget(typeId, slotId, pos, at) {
   const w = WIDGET_BY_ID[typeId];
 
   if (state.layoutMode === 'free') {
@@ -696,14 +891,37 @@ function placeWidget(typeId, slotId, pos) {
   }
 
   let slot = slotId ? state.slots.find((s) => s.id === slotId) : null;
+  if (at) {
+    /* explicit drop target in rows mode */
+    const rows = normalizeRows();
+    if (slot && !slot.widget) {
+      /* dropping onto an empty template slot just fills it */
+    } else {
+      slot = { id: nextId(), row: 0, w: w.w, h: w.h, hint: 'anything', widget: null };
+      state.slots.push(slot);
+      if (at.newRow) moveToNewRow(slot, at.row);
+      else {
+        const target = rows[at.row] || [];
+        if (target.length >= ROWS.maxPerRow) moveToNewRow(slot, at.row + 1);
+        else {
+          const share = Math.max(2, Math.min(4, Math.round(ROWS.cols / (target.length + 1))));
+          target.forEach((x) => { x.w = share; });
+          slot.w = share;
+          placeInRow(slot, at.row, at.index);
+        }
+      }
+    }
+  }
   if (!slot) slot = state.slots.find((s) => !s.widget);
   if (!slot) {
-    slot = { id: nextId(), w: w.w, h: w.h, hint: 'anything', widget: null };
+    slot = { id: nextId(), row: normalizeRows().length, w: w.w, h: w.h, hint: 'anything', widget: null };
     state.slots.push(slot);
   }
   const wasEmpty = !slot.widget;
   slot.widget = makeWidget(typeId);
-  if (wasEmpty) { slot.w = w.w; slot.h = w.h; }
+  /* an explicit drop target already worked out the row share, so keep it */
+  if (wasEmpty && !at) { slot.w = w.w; slot.h = w.h; }
+  if (wasEmpty && at) { slot.h = w.h; }
   state.selected = slot.id;
   state.pendingSlot = null;
   state.tab = 'panel';
@@ -736,17 +954,10 @@ function removeWidget(slotId) {
   }
   state.slots[i].widget = null;
   if (state.slots.length > 1 && state.slots.filter((s) => !s.widget).length > 3) state.slots.splice(i, 1);
+  normalizeRows();
   state.selected = null;
   renderCanvas();
   renderPanel();
-}
-
-function moveSlot(slotId, dir) {
-  const i = state.slots.findIndex((s) => s.id === slotId);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= state.slots.length) return;
-  [state.slots[i], state.slots[j]] = [state.slots[j], state.slots[i]];
-  renderCanvas();
 }
 
 function swapWidgets(aId, bId) {
@@ -836,7 +1047,7 @@ function payload() {
   const h = HAZARDS.find((x) => x.id === state.hazard);
   const t = TEMPLATES.find((x) => x.id === state.template);
   return {
-    schema: 'adapt-stl-design-studio/v3',
+    schema: 'adapt-stl-design-studio/v4',
     event: CFG.eventName || '',
     boardCode: state.code,
     startedAt: state.startedAt,
@@ -859,6 +1070,8 @@ function payload() {
         dataNeeded: s.widget.data, geography: s.widget.geo, freshness: s.widget.freq,
         dataAvailability: s.widget.avail, priority: s.widget.priority,
         widthCols: s.w, heightRows: s.h,
+        rowIndex: state.layoutMode === 'free' ? '' : (s.row || 0) + 1,
+        colIndex: state.layoutMode === 'free' ? '' : (((rowsOf()[s.row || 0] || []).indexOf(s)) + 1) || 1,
         x: state.layoutMode === 'free' ? s.x : '', y: state.layoutMode === 'free' ? s.y : '',
         widthPx: state.layoutMode === 'free' ? s.fw : '', heightPx: state.layoutMode === 'free' ? s.fh : '',
       };
@@ -871,13 +1084,13 @@ function toCSV(d) {
     'decision', 'action', 'audience', 'open_frequency', 'missing_data', 'barrier', 'contact',
     'panel_order', 'panel_type', 'panel_type_name', 'panel_category', 'panel_hazard_tag', 'panel_title',
     'need_text', 'data_needed', 'geography', 'freshness', 'data_availability', 'priority',
-    'layout_mode', 'width_cols', 'height_rows', 'pos_x', 'pos_y', 'width_px', 'height_px'];
+    'layout_mode', 'row_index', 'col_index', 'width_cols', 'height_rows', 'pos_x', 'pos_y', 'width_px', 'height_px'];
   const q = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
   const base = [d.boardCode, d.event, d.submittedAt, d.appTitle, d.purposeLabel, d.hazardLabel, d.templateLabel, d.role, d.organization,
     d.brief.decision, d.brief.action, d.brief.who, d.brief.frequency, d.brief.missing, d.brief.barrier, d.brief.contact];
   const rows = d.panels.length ? d.panels.map((p) => base.concat([p.order, p.type, p.typeName, p.category, p.hazardTag, p.title,
     p.need, p.dataNeeded, p.geography, p.freshness, p.dataAvailability, p.priority,
-    d.layoutMode, p.widthCols, p.heightRows, p.x, p.y, p.widthPx, p.heightPx])) : [base];
+    d.layoutMode, p.rowIndex, p.colIndex, p.widthCols, p.heightRows, p.x, p.y, p.widthPx, p.heightPx])) : [base];
   return [head.map(q).join(','), ...rows.map((r) => r.map(q).join(','))].join('\r\n');
 }
 
@@ -980,9 +1193,10 @@ function init() {
 
   $('#in-app-title').addEventListener('input', (e) => { state.appTitle = e.target.value; });
   $('#btn-add-slot').addEventListener('click', () => {
-    state.slots.push({ id: nextId(), w: 3, h: 2, hint: 'anything', widget: null });
+    const rows = normalizeRows();
+    state.slots.push({ id: nextId(), row: rows.length, w: 3, h: 2, hint: 'anything', widget: null });
     renderCanvas();
-    toast('Empty slot added at the bottom');
+    toast('Empty slot added on a new row at the bottom');
   });
   $('#btn-to-review').addEventListener('click', () => goto('review'));
   $('#btn-submit').addEventListener('click', submitBoard);
@@ -1087,8 +1301,10 @@ function init() {
       e.stopPropagation();
       const { act, id } = tool.dataset;
       if (act === 'del') removeWidget(id);
-      if (act === 'up') moveSlot(id, -1);
-      if (act === 'down') moveSlot(id, 1);
+      if (act === 'left') moveHoriz(id, -1);
+      if (act === 'right') moveHoriz(id, 1);
+      if (act === 'up') moveVert(id, -1);
+      if (act === 'down') moveVert(id, 1);
       return;
     }
     const empty = e.target.closest('[data-empty]');
@@ -1114,26 +1330,98 @@ function init() {
     if (!wEl) return;
     e.dataTransfer.setData('text/plain', 'move:' + wEl.dataset.widget);
     e.dataTransfer.effectAllowed = 'move';
+    document.body.classList.add('is-dragging-panel');
+    wEl.classList.add('is-drag-src');
   });
+  canvas.addEventListener('dragend', () => {
+    document.body.classList.remove('is-dragging-panel');
+    clearDropMarks();
+  });
+
+  function clearDropMarks() {
+    $$('.row-drop.is-over', canvas).forEach((x) => x.classList.remove('is-over'));
+    $$('.slot', canvas).forEach((x) => x.classList.remove('is-drop-target', 'drop-before', 'drop-after'));
+  }
+
+  /* which side of the hovered panel the pointer is on */
+  function dropSide(slotEl, clientX) {
+    const r = slotEl.getBoundingClientRect();
+    return clientX < r.left + r.width / 2 ? 'before' : 'after';
+  }
+
   canvas.addEventListener('dragover', (e) => {
-    const slot = e.target.closest('[data-slot]');
-    if (!slot) return;
+    const strip = e.target.closest('[data-rowdrop]');
+    if (strip) {
+      e.preventDefault();
+      clearDropMarks();
+      strip.classList.add('is-over');
+      return;
+    }
+    const slotEl = e.target.closest('[data-slot]');
+    if (!slotEl) return;
     e.preventDefault();
-    $$('.slot.is-drop-target', canvas).forEach((s) => s.classList.remove('is-drop-target'));
-    slot.classList.add('is-drop-target');
+    clearDropMarks();
+    const slot = state.slots.find((s) => s.id === slotEl.dataset.slot);
+    if (slot && !slot.widget) { slotEl.classList.add('is-drop-target'); return; }
+    slotEl.classList.add('drop-' + dropSide(slotEl, e.clientX));
   });
   canvas.addEventListener('dragleave', (e) => {
-    const slot = e.target.closest('[data-slot]');
-    if (slot) slot.classList.remove('is-drop-target');
+    if (e.target === canvas) clearDropMarks();
   });
   canvas.addEventListener('drop', (e) => {
-    const slot = e.target.closest('[data-slot]');
-    if (!slot) return;
-    e.preventDefault();
-    slot.classList.remove('is-drop-target');
     const data = e.dataTransfer.getData('text/plain') || '';
-    if (data.startsWith('new:')) placeWidget(data.slice(4), slot.dataset.slot);
-    else if (data.startsWith('move:')) swapWidgets(data.slice(5), slot.dataset.slot);
+    const strip = e.target.closest('[data-rowdrop]');
+    const slotEl = strip ? null : e.target.closest('[data-slot]');
+    if (!strip && !slotEl) return;
+    e.preventDefault();
+    clearDropMarks();
+    document.body.classList.remove('is-dragging-panel');
+
+    if (strip) {
+      const row = +strip.dataset.rowdrop;
+      if (data.startsWith('new:')) placeWidget(data.slice(4), null, null, { row, index: 0, newRow: true });
+      else if (data.startsWith('move:')) {
+        const rows = normalizeRows();
+        const s = state.slots.find((x) => x.id === data.slice(5));
+        if (!s) return;
+        /* if it is alone in its row, removing that row shifts everything below up one */
+        const alone = (rows[s.row] || []).length === 1;
+        moveToNewRow(s, alone && row > s.row ? row - 1 : row);
+        afterRowChange(s.id);
+      }
+      return;
+    }
+
+    const targetSlot = state.slots.find((s) => s.id === slotEl.dataset.slot);
+    if (!targetSlot) return;
+    if (!targetSlot.widget) {
+      if (data.startsWith('new:')) placeWidget(data.slice(4), targetSlot.id);
+      else if (data.startsWith('move:')) swapWidgets(data.slice(5), targetSlot.id);
+      return;
+    }
+    const rows = normalizeRows();
+    const row = targetSlot.row || 0;
+    const members = rows[row] || [];
+    let index = members.indexOf(targetSlot) + (dropSide(slotEl, e.clientX) === 'after' ? 1 : 0);
+    if (data.startsWith('new:')) {
+      placeWidget(data.slice(4), null, null, { row, index });
+      return;
+    }
+    if (!data.startsWith('move:')) return;
+    const s = state.slots.find((x) => x.id === data.slice(5));
+    if (!s || s === targetSlot) return;
+    if ((s.row || 0) === row) {
+      if (members.indexOf(s) < index) index -= 1;
+    } else if (members.length >= ROWS.maxPerRow) {
+      toast('That row already holds four panels \u2014 drop into a gap to stack instead');
+      return;
+    } else {
+      const share = Math.max(2, Math.min(4, Math.round(ROWS.cols / (members.length + 1))));
+      members.forEach((x) => { x.w = share; });
+      s.w = share;
+    }
+    placeInRow(s, row, index);
+    afterRowChange(s.id);
   });
 
   let rt;

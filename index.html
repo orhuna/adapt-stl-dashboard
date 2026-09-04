@@ -133,7 +133,7 @@
         <div class="rail-head">
           <button class="btn btn-ghost btn-icon mobile-only rail-close" id="btn-close-rail" aria-label="Close panel list">✕</button>
           <h3>Panels</h3>
-          <p id="rail-help">Drag onto the canvas, or tap a panel and then tap an empty slot.</p>
+          <p id="rail-help">Drag onto the canvas — drop beside a panel to sit side by side, or into a gap to start a new row.</p>
           <input class="text-input rail-search" id="in-palette-search" type="search" placeholder="Search panels…" aria-label="Search panels">
         </div>
         <div class="rail-body" id="palette"></div>
@@ -146,8 +146,8 @@
           <span class="chip" id="chip-count">0 panels</span>
           <span class="spacer"></span>
           <div class="seg seg-sm" id="layout-mode" role="group" aria-label="Layout mode">
-            <button type="button" data-val="grid" class="is-active">Tidy grid</button>
-            <button type="button" data-val="free">Free layout</button>
+            <button type="button" data-val="grid" class="is-active" title="Stack panels in rows, or sit them side by side">Rows &amp; columns</button>
+            <button type="button" data-val="free" title="Place every window anywhere you like">Free layout</button>
           </div>
           <button class="btn btn-sm mobile-only" id="btn-rail-2">＋ Add panel</button>
           <button class="btn btn-sm" id="btn-add-slot">Add empty slot</button>
