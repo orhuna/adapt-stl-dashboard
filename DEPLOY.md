@@ -180,13 +180,50 @@ Printing rules that actually matter at an event:
 
 ## A9. After a schema change (v5 — the report block)
 
-The export grew from 37 to 47 columns when the report questions were added. If your Google Sheet was created before that:
+The export grew from 37 to 47 columns when the report questions were added. Which steps you follow depends on whether this Sheet has ever been deployed.
 
-1. Open **Extensions → Apps Script** on the Sheet.
-2. Replace the whole file with the current `server/google-apps-script.gs` from the site files.
-3. **Deploy → Manage deployments → pencil icon → Version: New version → Deploy.** Keep the same deployment so the URL in `config.js` still works.
-4. Delete the old `boards` and `panels` tabs, or rename them `boards_v4` / `panels_v4`. The script writes its header row only when a tab is empty, so an old tab keeps its old, now-wrong headers.
-5. Submit one test board from your phone and confirm the new `report_*` columns appear.
+**First check which case you are in.** In the Apps Script editor click **Deploy → Manage deployments**.
+
+- If the dialog is **empty** — a gear labelled "Select type" on the left and *"Please select a deployment type"* in the middle — you have **never deployed this script**. Go to A9-a.
+- If you see a **row with a deployment name, a version number and a Web app URL**, you already have one. Go to A9-b.
+
+### A9-a. You have never deployed (first-time setup)
+
+There is nothing to update — you are simply doing the original setup with the current script. Close the "Manage deployments" dialog and:
+
+1. Make sure the editor contains the **current** `server/google-apps-script.gs` from the site files. Select all, delete, paste, **Ctrl/Cmd + S**.
+2. **Deploy → New deployment** (not "Manage deployments").
+3. Click the **gear icon** next to "Select type" → choose **Web app**.
+4. Fill in the form that appears on the right:
+   - **Description**: `Forum collector v1`
+   - **Execute as**: **Me (your@email)**
+   - **Who has access**: **Anyone** — not "Anyone with Google account". Guests will not be signed in. This is the single most common mistake.
+5. Click **Deploy**.
+6. Authorize: **Authorize access** → pick your Google account → **"Google hasn't verified this app"** → **Advanced** → **Go to ADAPT-STL collector (unsafe)** → **Allow**. That warning is normal for a script you wrote yourself.
+7. Copy the **Web app URL** — it ends in `/exec`.
+8. Paste it into `config.js` as `collectUrl`, then commit and push so the live site picks it up:
+
+   ```bash
+   git add config.js && git commit -m "Point the studio at the Google Sheet collector" && git push
+   ```
+
+9. Verify: open the `/exec` URL in a browser tab. You should see
+   `{"ok":true,"service":"ADAPT-STL collector","boardsReceived":0}`.
+   A Google sign-in page instead means "Who has access" is wrong — redo step 4 via A9-b.
+
+Then submit one test board from your phone and confirm a row appears in the `boards` tab with the ten `report_*` columns.
+
+### A9-b. You already have a deployment (updating the script)
+
+1. Paste the current `server/google-apps-script.gs` over the whole editor contents and save.
+2. **Deploy → Manage deployments** → click the **pencil icon** on the existing row.
+3. Set **Version** to **New version** in the dropdown. Leave everything else alone.
+4. Click **Deploy**.
+
+This keeps the same `/exec` URL, so `config.js` and your printed QR codes keep working. Choosing "New deployment" instead would give you a *different* URL and silently break collection.
+
+5. In the Sheet, rename the existing `boards` and `panels` tabs to `boards_v4` and `panels_v4`, or delete them. The script writes its header row only into an empty tab, so an old tab would keep its old, now-wrong headers while the new values shift underneath them.
+6. Submit one test board and confirm the ten `report_*` columns appear.
 
 Boards submitted under v4 still load in the gallery; they simply show no report block.
 
