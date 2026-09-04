@@ -16,7 +16,7 @@ window.ADAPT_CONFIG = {
      Script web app described in DEPLOY.md (or any endpoint that
      accepts a POST with a JSON body — Formspree, Basin, an
      Airtable webhook, your own relay).                          */
-  collectUrl: '',
+  collectUrl: 'https://script.google.com/macros/s/AKfycbx1JSAvGqBase0oIqREDzecp-M0Qu2J0XxzeBgX2kB7K4RPsHs6HDssyKOhbeipu71wdA/exec',
 
   /* 'cors'    — normal. The app can tell whether the POST worked
                  and falls back to a device download if it didn't.
