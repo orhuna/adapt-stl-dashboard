@@ -85,6 +85,10 @@ function doPost(e) {
 
 Deploy it as a web app with access set to "Anyone", then paste the `/exec` URL into `collectUrl`.
 
+### The link
+
+The studio is live at **[https://orhuna.github.io/adapt-stl-dashboard/](https://orhuna.github.io/adapt-stl-dashboard/)**, hosted free on GitHub Pages from the public repo [`orhuna/adapt-stl-dashboard`](https://github.com/orhuna/adapt-stl-dashboard). Pushing to `main` republishes it in a minute or two, so you can fix a typo the morning of the event without touching the printed QR codes.
+
 ### QR code
 
 Print the QR code at A5 or larger and put one on every table. Test one scan on the venue Wi-Fi before the session starts — and have a short fallback URL written underneath the code in case a phone camera struggles.
@@ -107,6 +111,14 @@ row_index, col_index, width_cols, height_rows, pos_x, pos_y, width_px, height_px
 ```
 
 In rows & columns mode, `row_index` (1-based, top to bottom) and `col_index` (1-based, left to right within that row) give you the exact arrangement: two panels sharing a `row_index` were placed **side by side**, and consecutive `row_index` values were **stacked**. `width_cols` is that panel's share of its row out of six. The pixel columns are blank in this mode.
+
+### Seeing the dashboards, not just the text
+
+The CSV tells you what people wrote. **`gallery.html`** — the same site with `/gallery.html` on the end — shows you what they *built*. It reads the boards back out of the Google Sheet (or from the JSON files people downloaded) and redraws each dashboard: the same panels with the same preview imagery, in the same rows and columns the participant arranged, with that person's note printed under the panel it belongs to, plus their decision brief underneath the board.
+
+Filter by hazard or purpose, sort by date or panel count, pull a combined panel CSV across every board, or hit print to save the whole set as a PDF with one board per block. It is not linked from the participant app, and it needs the view key set in the Apps Script, so guests will not wander into other people's submissions. See DEPLOY.md section A8.
+
+The visual record matters for the paper in a way the text alone does not: seeing that six of nine boards put a map and a threshold alert side by side in the top row is a finding, and it is much easier to argue from the redrawn boards than from a column of `row_index` values.
 
 In free layout, `pos_x` / `pos_y` / `width_px` / `height_px` record where the participant actually put each window (with `surface_width_px` in the JSON as the reference frame), and panels are ordered top-to-bottom then left-to-right. `row_index` / `col_index` are blank there.
 

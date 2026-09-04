@@ -78,7 +78,19 @@ Save the file. That is the only file you ever edit.
 
 ### A7. Redeploying after a script change
 
-If you ever edit the script, use **Deploy → Manage deployments → pencil icon → Version: New version → Deploy**. This keeps the same `/exec` URL. Using "New deployment" instead gives you a *different* URL and your printed QR codes would still point at the old one.
+If you ever edit the script — including updating to the version in this repo, which added the `row_index` / `col_index` columns and the read endpoint the gallery uses — use **Deploy → Manage deployments → pencil icon → Version: New version → Deploy**. This keeps the same `/exec` URL. Using "New deployment" instead gives you a *different* URL and your printed QR codes would still point at the old one.
+
+### A8. Reading the boards back — `gallery.html`
+
+The sheet gives you the text. `gallery.html` gives you the **pictures**: it redraws every dashboard exactly as the participant arranged it — same panels, same side-by-side and stacked rows, same free-layout positions — with the note each person wrote sitting under the panel it belongs to.
+
+1. Open `https://<your-site>/gallery.html`. It is not linked from the participant app, so nobody at the event stumbles into it.
+2. Paste your `/exec` URL and the **view key**, then press **Load boards**. The key is `VIEW_KEY` at the top of `server/google-apps-script.gs` — change it from the default before the event.
+3. Or skip the sheet entirely: drag in the `adapt-stl-*.json` files participants downloaded, or paste the contents of the `raw_json` column. Several files at once is fine, and duplicates are ignored.
+
+Once loaded you can filter by hazard and purpose, sort by date or panel count, download a combined panel CSV across every board, and use the print button to save the whole gallery as a PDF — one page-break-safe block per board, which is what you want for a workshop debrief or a figure appendix.
+
+Everything happens in your browser. No board data is sent anywhere by this page.
 
 ### Getting the data out
 
@@ -89,9 +101,15 @@ If you ever edit the script, use **Deploy → Manage deployments → pencil icon
 
 ---
 
-## B. Hosting — pick one
+## B. Hosting
 
-All three are free, give you HTTPS, and are fast enough for a room full of phones. **Option 1 is the fastest.**
+**Already done — the site is live at [https://orhuna.github.io/adapt-stl-dashboard/](https://orhuna.github.io/adapt-stl-dashboard/)**, published from the public repo [`orhuna/adapt-stl-dashboard`](https://github.com/orhuna/adapt-stl-dashboard) on the `main` branch. That is the URL the printed QR code points at, and it will not change. To update the site, commit and push to `main` — GitHub rebuilds within a minute or two and the QR code keeps working.
+
+```bash
+git add -A && git commit -m "tweak wording" && git push
+```
+
+The alternatives below are kept in case you ever want to move off GitHub. All are free, give you HTTPS, and are fast enough for a room full of phones.
 
 ### Option 1 — Netlify Drop (about 2 minutes, no command line)
 
@@ -105,18 +123,20 @@ Netlify Drop takes a drag-and-dropped folder and hosts it immediately; sites und
 6. You get a URL like `https://cheerful-otter-a1b2c3.netlify.app`. Under **Site configuration → Change site name**, rename it to something readable such as `adapt-stl-studio`, giving `https://adapt-stl-studio.netlify.app`.
 7. To update the site later, drag the folder onto the site's **Deploys** tab. The URL stays the same, so your printed QR codes keep working.
 
-### Option 2 — GitHub Pages (best if you want the code versioned)
+### Option 2 — GitHub Pages (what this project uses)
 
-Free for public repositories and served over GitHub's CDN with HTTPS ([GitHub Docs](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)).
+Free for public repositories and served over GitHub's CDN with HTTPS ([GitHub Docs](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)). This is already set up; the steps are recorded here so you can redo it on another account.
 
-1. Create a new **public** repository, e.g. `adapt-stl-studio`.
-2. Upload the project files (drag them into the web uploader, or `git push`). `index.html` must sit at the repository root.
-3. Go to **Settings → Pages**.
-4. Under "Build and deployment", set **Source: Deploy from a branch**, **Branch: `main`**, **Folder: `/ (root)`**. Save.
-5. Wait one to two minutes. Your URL is `https://<your-username>.github.io/adapt-stl-studio/`.
-6. To update: commit a change; the site republishes automatically.
+1. Create a new **public** repository — Pages on private repos needs a paid plan.
+2. Push the project files with `index.html` at the repository root.
+3. **Settings → Pages → Build and deployment**: **Source: Deploy from a branch**, **Branch: `main`**, **Folder: `/ (root)`**. Save.
+4. Wait one to two minutes. Your URL is `https://<your-username>.github.io/<repo>/`.
+5. To update: commit and push; the site republishes automatically.
 
-Note: a public repo means `config.js` — and therefore your `/exec` URL — is publicly visible. That URL only accepts writes, so the worst case is junk rows, but if that bothers you use Option 1 or 3, or keep a private repo on a paid plan.
+**Two things to know about the public repo.**
+
+- `config.js` — and therefore your `/exec` URL — is publicly visible. That URL only accepts writes, so the worst case is somebody posting junk rows into the sheet, which you can spot and delete because every row carries a `board_code` and timestamp. If that is unacceptable, use Netlify or Cloudflare below, where the file is not browsable.
+- Leave `viewKey` empty in `config.js` and type the key on the gallery page instead. Otherwise the key that unlocks reading everyone's submissions sits in a public file.
 
 ### Option 3 — Cloudflare Pages (most generous free tier)
 
